@@ -150,11 +150,11 @@
 
 .errorBox {
   margin-bottom: var(--space-4);
-  border: var(--border-width) solid #fecaca;
+  border: var(--border-width) solid var(--color-danger);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
-  background: #fef2f2;
-  color: #9f1239;
+  background: var(--color-surface);
+  color: var(--color-danger);
 }
 
 .empty {
