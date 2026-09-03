@@ -49,12 +49,7 @@ type errorResponse struct {
 	Error apiError `json:"error"`
 }
 
-type greeting struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Message   string `json:"message"`
-	CreatedAt string `json:"created_at"`
-}
+	CreatedAt time.Time `json:"created_at"`
 
 type greetingListResponse struct {
 	Greetings  []greeting `json:"greetings"`
