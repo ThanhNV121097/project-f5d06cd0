@@ -70,7 +70,7 @@ export default function Home() {
   async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      const saved = await request<Greeting>("/v1/greetings", {
+      await request<Greeting>("/v1/greetings", {
         method: "POST",
         body: JSON.stringify({ name, message })
       });
