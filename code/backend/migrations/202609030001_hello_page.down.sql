@@ -1,2 +1,2 @@
-DROP INDEX IF EXISTS greetings_created_at_id_idx;
+DROP INDEX IF EXISTS idx_greetings_created_at_id;
 DROP TABLE IF EXISTS greetings;
