@@ -158,12 +158,11 @@ func (s server) hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
-	contentType := strings.TrimSpace(r.Header.Get("Content-Type"))
-	if contentType == "" {
+	if r.Header.Get("Content-Type") == "" {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
 		return
 	}
-	mediaType, _, err := mime.ParseMediaType(contentType)
+	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || mediaType != "application/json" {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
 		return
@@ -177,18 +176,18 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
 		return
 	}
-	dec := json.NewDecoder(strings.NewReader(string(body)))
+	dec := json.NewDecoder(bytes.NewReader(body))
 	dec.DisallowUnknownFields()
 	var input createGreetingInput
 	if err := dec.Decode(&input); err != nil {
-		if strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "cannot unmarshal") {
+		if strings.Contains(err.Error(), "unknown field") {
 			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain only name and message.", nil)
 			return
 		}
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
-	if dec.More() || dec.InputOffset() != int64(len(body)) {
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
