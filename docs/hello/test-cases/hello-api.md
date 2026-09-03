@@ -1,43 +1,43 @@
 # Test Cases — Hello API
 
-Risk level: low. Read-only API. Cover success shape, defaulting, no-body behavior, and documented boundary on over-limit name.
+Risk level: medium. API has public reads only, but contract exactness matters for frontend and later backend verification.
 
-## Scenario 1: Health returns exact ok body
-**Given** backend is running and reachable
-**When** client sends `GET /api/health`
-**Then** response status is `200` and response body is exactly `{"status":"ok"}` with no extra fields
+## HELLO-001 — Health response
+
+**Scenario**: health route returns ok JSON
+**Given** API server is running
+**When** client calls health check route
+**Then** response is 200 and JSON is `{"status":"ok"}`
 Check: fetch_url
 
-Trace: HELLO-001 AC-1, service contract 3.1 success shape
-
-## Scenario 2: Hello returns default greeting with no name
-**Given** backend is running and reachable
-**When** client sends `GET /api/hello` with no `name` query parameter
-**Then** response status is `200` and response body is exactly `{"message":"Hello, World!"}`
+**Scenario**: health response body contains only status
+**Given** API server is running
+**When** client calls health check route with no special request data
+**Then** response body contains only health status needed for check and no extra JSON fields
 Check: fetch_url
 
-Trace: HELLO-002 AC-1, service contract 3.2 default response
+## HELLO-002 — Greeting text
 
-## Scenario 3: Hello returns supplied name in message
-**Given** backend is running and reachable
-**When** client sends `GET /api/hello?name=Ada`
-**Then** response status is `200` and response body is exactly `{"message":"Hello, Ada!"}`
+**Scenario**: hello defaults to World when name missing
+**Given** no name query is sent
+**When** client calls hello route
+**Then** response is 200 and JSON is `{"message":"Hello, World!"}`
 Check: fetch_url
 
-Trace: HELLO-002 AC-2, service contract 3.2 named response
-
-## Scenario 4: Hello ignores request body
-**Given** backend is running and reachable
-**When** client sends `GET /api/hello?name=Ada` with any request body
-**Then** response status is `200` and response body is still exactly `{"message":"Hello, Ada!"}`
+**Scenario**: hello uses supplied name
+**Given** name query is `Ada`
+**When** client calls hello route
+**Then** response is 200 and JSON is `{"message":"Hello, Ada!"}`
 Check: fetch_url
 
-Trace: service contract 3.2 request body ignored
-
-## Scenario 5: Hello rejects over-limit name
-**Given** backend is running and reachable
-**When** client sends `GET /api/hello?name=` followed by more than 80 Unicode code points after URL decoding
-**Then** response status is `422` and response body uses error envelope with `code` `VALIDATION_FAILED`
+**Scenario**: hello trims supplied name before message
+**Given** name query is `  Ada  `
+**When** client calls hello route
+**Then** response is 200 and JSON is `{"message":"Hello, Ada!"}`
 Check: fetch_url
 
-Trace: service contract 3.2 validation boundary, error contract 2.3
+**Scenario**: hello rejects name longer than 80 code points
+**Given** name query is longer than 80 Unicode code points after URL decoding
+**When** client calls hello route
+**Then** response is 422 and error code is `VALIDATION_FAILED`
+Check: fetch_url
