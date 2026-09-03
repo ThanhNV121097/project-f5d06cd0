@@ -319,8 +319,11 @@ func decodeCursor(raw string) (*cursorPayload, error) {
 
 func writeAPIError(w http.ResponseWriter, status int, code, message string, details []fieldDetail) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if requestID := requestIDFromContext(w); requestID != "" {
+		w.Header().Set("X-Request-Id", requestID)
+	}
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(errorResponse{Error: apiError{Code: code, Message: message, Details: details}})
+	_ = json.NewEncoder(w).Encode(errorResponse{Error: apiError{Code: code, Message: message, Details: details, RequestID: requestIDFromContext(w)}})
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
