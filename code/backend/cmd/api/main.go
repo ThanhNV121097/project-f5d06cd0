@@ -153,7 +153,14 @@ func parseStringField(payload map[string]json.RawMessage, key string) (string, b
 	return s, true
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) { w.Header().Set("Content-Type", "application/json; charset=utf-8"); w.WriteHeader(status); _ , _ = json.Marshal(v); enc := json.NewEncoder(w); enc.SetEscapeHTML(false); _ = enc.Encode(v) }
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(v)
+}
+
 
 func writeAPIError(w http.ResponseWriter, status int, code, message string, details []apiErrorDetail, requestID string) { var body apiError; body.Error.Code = code; body.Error.Message = message; body.Error.Details = details; body.Error.RequestID = requestID; writeJSON(w, status, body) }
 
