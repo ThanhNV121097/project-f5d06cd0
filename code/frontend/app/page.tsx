@@ -29,26 +29,43 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export default function Home() {
   const [hello, setHello] = useState("Hello, World!");
+  const [helloName, setHelloName] = useState("Ada");
   const [greetings, setGreetings] = useState<Greeting[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
 
+  async function loadHello(nameParam = "") {
+    const query = nameParam ? `?name=${encodeURIComponent(nameParam)}` : "";
+    const helloRes = await request<{ message: string }>(`/v1/hello${query}`);
+    setHello(helloRes.message);
+  }
+
+  async function loadGreetings() {
+    const listRes = await request<ApiGreetingList>("/v1/greetings");
+    setGreetings(listRes.greetings);
+  }
+
   useEffect(() => {
     (async () => {
       try {
-        const [helloRes, listRes] = await Promise.all([
-          request<{ message: string }>("/v1/hello"),
-          request<ApiGreetingList>("/v1/greetings")
-        ]);
-        setHello(helloRes.message);
-        setGreetings(listRes.greetings);
+        await Promise.all([loadHello(), loadGreetings()]);
         setError(null);
       } catch {
         setError("API unreachable. Check backend is running, then reload.");
       }
     })();
   }, []);
+
+  async function refreshHello(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      await loadHello(helloName);
+      setError(null);
+    } catch {
+      setError("API unreachable. Check backend is running, then reload.");
+    }
+  }
 
   async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,7 +74,8 @@ export default function Home() {
         method: "POST",
         body: JSON.stringify({ name, message })
       });
-      setGreetings((current) => [saved, ...current]);
+      await Promise.all([loadHello(), loadGreetings()]);
+      setGreetings((current) => [saved, ...current].slice(0, current.length + 1));
       setName("");
       setMessage("");
       setError(null);
@@ -73,6 +91,14 @@ export default function Home() {
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--color-accent-secondary)]">Hello World</p>
           <h1 className="mt-2 text-3xl">{hello}</h1>
         </div>
+
+        <form onSubmit={refreshHello} className="flex items-end gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4" aria-label="Refresh hello panel">
+          <div className="grid flex-1 gap-2">
+            <label htmlFor="hello-name">Hello name</label>
+            <input id="hello-name" value={helloName} onChange={(e) => setHelloName(e.target.value)} className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-4 py-3" maxLength={80} />
+          </div>
+          <button className="w-fit rounded-[var(--radius-full)] bg-[var(--color-primary)] px-5 py-3 font-medium text-[var(--color-primary-text)]" type="submit">Refresh hello</button>
+        </form>
 
         {error ? <div className="rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-red-50 p-4 text-[var(--color-danger)]">{error}</div> : null}
 
