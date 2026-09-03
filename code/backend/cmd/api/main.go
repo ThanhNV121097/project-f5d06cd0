@@ -131,24 +131,26 @@ func (s server) apiHello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
-	if ct := r.Header.Get("Content-Type"); ct != "" && !strings.HasPrefix(ct, "application/json") { writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Content type must be application/json.", nil, ""); return }
+	requestID := requestID(r)
+	withRequestID(w, requestID)
+	if ct := r.Header.Get("Content-Type"); ct != "" && !strings.HasPrefix(ct, "application/json") { writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Content type must be application/json.", nil, requestID); return }
 	body, err := io.ReadAll(io.LimitReader(r.Body, 16<<10+1))
-	if err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }
-	if len(body) > 16<<10 { writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Body too large.", nil, ""); return }
+	if err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, requestID); return }
+	if len(body) > 16<<10 { writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Body too large.", nil, requestID); return }
 	var payload map[string]json.RawMessage
-	if err := json.Unmarshal(body, &payload); err != nil { writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Malformed JSON.", nil, ""); return }
+	if err := json.Unmarshal(body, &payload); err != nil { writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Malformed JSON.", nil, requestID); return }
 	name, ok := parseStringField(payload, "name")
-	if !ok { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"name", Code:"REQUIRED", Message:"Name is required."}}, ""); return }
+	if !ok { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"name", Code:"REQUIRED", Message:"Name is required."}}, requestID); return }
 	message, ok := parseStringField(payload, "message")
-	if !ok { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"message", Code:"REQUIRED", Message:"Message is required."}}, ""); return }
+	if !ok { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"message", Code:"REQUIRED", Message:"Message is required."}}, requestID); return }
 	name = strings.TrimSpace(name); message = strings.TrimSpace(message)
 	details := []apiErrorDetail{}
 	if name == "" { details = append(details, apiErrorDetail{Field:"name", Code:"REQUIRED", Message:"Name is required."}) } else if utf8.RuneCountInString(name) > 80 { details = append(details, apiErrorDetail{Field:"name", Code:"TOO_LONG", Message:"Name must be 1 to 80 characters."}) }
 	if message == "" { details = append(details, apiErrorDetail{Field:"message", Code:"REQUIRED", Message:"Message is required."}) } else if utf8.RuneCountInString(message) > 240 { details = append(details, apiErrorDetail{Field:"message", Code:"TOO_LONG", Message:"Message must be 1 to 240 characters."}) }
-	if len(details) > 0 { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", details, ""); return }
+	if len(details) > 0 { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", details, requestID); return }
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second); defer cancel()
 	var row greeting
-	if err := s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, ""); return }
+	if err := s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, requestID); return }
 	w.Header().Set("Location", "/v1/greetings/"+row.ID)
 	writeJSON(w, http.StatusCreated, row)
 }
