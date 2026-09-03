@@ -208,7 +208,11 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	var createdAt time.Time
 	err = s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&created.ID, &created.Name, &created.Message, &createdAt)
 	if err != nil {
-		writeAPIError(w, r, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || isUnavailableDBError(err) {
+			writeAPIError(w, r, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+			return
+		}
+		writeAPIError(w, r, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
 		return
 	}
 	created.CreatedAt = createdAt.UTC().Format(time.RFC3339)
