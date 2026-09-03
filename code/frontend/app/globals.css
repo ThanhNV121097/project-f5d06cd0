@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-primary: #4f46e5;
+  --color-primary-text: #ffffff;
+  --color-accent-secondary: #14b8a6;
+  --color-success: #16a34a;
+  --color-danger: #dc2626;
+  --color-focus: color-mix(in srgb, #4f46e5 70%, white);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-11: 44px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 17px;
+  --text-xl: 18px;
+  --text-2xl: 32px;
+  --text-3xl: 64px;
+  --font-weight-body: 400;
+  --font-weight-medium: 600;
+  --font-weight-heading: 700;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --radius-xs: 11px;
+  --radius-sm: 14px;
+  --radius-md: 16px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-full: 9999px;
+  --border-width: 1px;
+  --shadow-sm: 0 10px 25px rgba(79, 70, 229, .25);
+  --shadow-md: 0 12px 24px rgba(79, 70, 229, .22);
+  --shadow-lg: 0 18px 50px rgba(15, 23, 42, .08);
+  --duration-fast: .18s;
+  --duration-base: .35s;
+  --easing: ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-bg);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-body);
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: var(--space-8) var(--space-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
