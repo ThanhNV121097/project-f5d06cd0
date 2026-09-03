@@ -144,8 +144,17 @@
   box-shadow: var(--shadow-md);
 }
 
-.button:disabled {
-  opacity: 0.7;
+.field input:focus-visible,
+.field textarea:focus-visible,
+.button:focus-visible {
+  outline: var(--border-width) solid var(--color-primary);
+  outline-offset: var(--space-1);
+  box-shadow: 0 0 0 var(--space-1) color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  border-color: var(--color-primary);
 }
 
 .errorBox {
