@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ThanhNV121097/project-f5d06cd0/backend/migrations"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -53,6 +55,11 @@ type greetingsResponse struct {
 	Greetings  []greeting `json:"greetings"`
 	NextCursor *string    `json:"next_cursor"`
 	HasMore    bool       `json:"has_more"`
+}
+
+type cursorPayload struct {
+	CreatedAt string `json:"created_at"`
+	ID        string `json:"id"`
 }
 
 func main() {
@@ -98,7 +105,7 @@ func (s server) apiHealth(w http.ResponseWriter, r *http.Request) { writeJSON(w,
 func (s server) apiHello(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.URL.Query().Get("name"))
 	if utf8.RuneCountInString(name) > 80 {
-		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Name is too long.", nil, "")
+		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."}}, "")
 		return
 	}
 	if name == "" { name = "World" }
@@ -131,25 +138,45 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	limit := 20
 	if raw := r.URL.Query().Get("limit"); raw != "" { n, err := strconv.Atoi(raw); if err != nil || n < 1 || n > 100 { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"limit", Code:"INVALID", Message:"Limit must be between 1 and 100."}}, ""); return }; limit = n }
-	if cursor := r.URL.Query().Get("cursor"); cursor != "" { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"cursor", Code:"INVALID", Message:"Cursor is malformed."}}, ""); return }
+	var cursor cursorPayload
+	if raw := r.URL.Query().Get("cursor"); raw != "" { if err := decodeCursor(raw, &cursor); err != nil { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"cursor", Code:"INVALID", Message:"Cursor is malformed."}}, ""); return } }
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second); defer cancel()
-	rows, err := s.db.Query(ctx, `SELECT id, name, message, created_at FROM greetings ORDER BY created_at DESC, id DESC LIMIT $1`, limit+1)
+	query := `SELECT id, name, message, created_at FROM greetings`
+	args := []any{limit + 1}
+	if cursor.ID != "" {
+		query += ` WHERE (created_at, id) < ($2::timestamptz, $3::bigint)`
+		args = append(args, cursor.CreatedAt, cursor.ID)
+	}
+	query += ` ORDER BY created_at DESC, id DESC LIMIT $1`
+	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil { writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, ""); return }
 	defer rows.Close()
 	items := make([]greeting, 0, limit)
 	for rows.Next() { var row greeting; if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }; items = append(items, row) }
 	if err := rows.Err(); err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }
 	hasMore := len(items) > limit
-	if hasMore { items = items[:limit] }
-	writeJSON(w, http.StatusOK, greetingsResponse{Greetings: items, NextCursor: nil, HasMore: hasMore})
+	var nextCursor *string
+	if hasMore { items = items[:limit]; c := encodeCursor(items[len(items)-1]); nextCursor = &c }
+	writeJSON(w, http.StatusOK, greetingsResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
 }
 
 func parseStringField(payload map[string]json.RawMessage, key string) (string, bool) {
 	raw, ok := payload[key]
-	if !ok { return "", false }
+	if !ok { return , false }
 	var s string
 	if err := json.Unmarshal(raw, &s); err != nil { return "", false }
 	return s, true
+}
+
+func decodeCursor(raw string, out *cursorPayload) error {
+	data, err := base64.RawURLEncoding.DecodeString(raw)
+	if err != nil { return err }
+	return json.Unmarshal(data, out)
+}
+
+func encodeCursor(row greeting) string {
+	data, _ := json.Marshal(cursorPayload{CreatedAt: row.CreatedAt, ID: row.ID})
+	return base64.RawURLEncoding.EncodeToString(data)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -175,3 +202,4 @@ func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
 }
 
 func applyMigration(ctx context.Context, db *pgxpool.Pool, name string) error { tx, err := db.Begin(ctx); if err != nil { return err }; defer tx.Rollback(ctx); var exists bool; if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE name = $1)`, name).Scan(&exists); err != nil { return err }; if exists { return tx.Commit(ctx) }; sqlBytes, err := fs.ReadFile(migrations.FS, name); if err != nil { return err }; if _, err := tx.Exec(ctx, string(sqlBytes)); err != nil { return err }; if _, err := tx.Exec(ctx, `INSERT INTO schema_migrations (name) VALUES ($1)`, name); err != nil { return err }; return tx.Commit(ctx) }
+
