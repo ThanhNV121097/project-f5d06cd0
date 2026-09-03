@@ -5,7 +5,7 @@ Risk: high. Feature writes data, must prove API contract and DB persistence end 
 ## Scenario: POST valid greeting stores row and returns id plus created_at
 **Given** backend running, `greetings` table empty, and client sends JSON body `{ "name": "Ada", "message": "Hello from browser" }` to `POST /api/greetings`
 **When** request is submitted
-**Then** response is `201`, body includes non-empty string `id`, trimmed `name` `Ada`, trimmed `message` `Hello from browser`, and RFC 3339 UTC `created_at`; row exists in DB with same values
+**Then** response is `201`, `Location` header is `/api/greetings/{id}`, body includes non-empty string `id`, trimmed `name` `Ada`, trimmed `message` `Hello from browser`, and RFC 3339 UTC `created_at`; row exists in DB with same values
 **Check:** fetch_url
 
 ## Scenario: GET greetings returns stored rows newest first
