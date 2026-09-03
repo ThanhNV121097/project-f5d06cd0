@@ -38,8 +38,8 @@ export default function Home() {
     (async () => {
       try {
         const [helloRes, listRes] = await Promise.all([
-          request<{ message: string }>("/hello"),
-          request<ApiGreetingList>("/greetings")
+          request<{ message: string }>("/v1/hello"),
+          request<ApiGreetingList>("/v1/greetings")
         ]);
         setHello(helloRes.message);
         setGreetings(listRes.greetings);
