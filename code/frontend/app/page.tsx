@@ -11,6 +11,8 @@ type Greeting = {
 
 type ApiGreetingList = {
   greetings: Greeting[];
+  next_cursor: string | null;
+  has_more: boolean;
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
