@@ -352,7 +352,36 @@ No third-party integrations.
 | HELLO-004 | `GET /v1/greetings` |
 | HELLO-005 | `GET /v1/health`, `GET /v1/hello`, `POST /v1/greetings`, `GET /v1/greetings` |
 
-## 10. Open questions
+## 10. Story extension — Persist greetings backend contract
+
+Persist greetings implements existing sections 3.3 and 3.4. Backend work for this story must implement `POST /v1/greetings` and `GET /v1/greetings`; deploy proxy exposes them externally as `/api/greetings`.
+
+**Reviewed UI mock contract** — `code/frontend/lib/mock/persist-greetings.ts` exposes:
+
+```ts
+type Greeting = {
+  id: string;
+  name: string;
+  message: string;
+  created_at: string;
+};
+
+saveGreeting(input: { name: string; message: string }): Promise<Greeting>;
+fetchGreetings(): Promise<{ greetings: Greeting[] }>;
+```
+
+Backend response uses same `Greeting` fields and same `{ greetings }` list key. Backend may also return `next_cursor` and `has_more` on list responses per existing pagination contract; frontend adapter can ignore these fields when not needed. Mock ids like `g_...` are not backend ids; backend returns database `bigint` ids encoded as decimal strings.
+
+| Endpoint | Status for this story | Auth | Request | Success | Errors |
+|---|---|---|---|---|---|
+| `POST /v1/greetings` | implement | public | JSON body with required `name` and `message`, trimmed, `name` 1..80 Unicode code points, `message` 1..240 Unicode code points | `201` greeting object with `id`, `name`, `message`, `created_at` and `Location: /v1/greetings/{id}` | `BAD_REQUEST` 400; `VALIDATION_FAILED` 422; `UNAVAILABLE` 503; `INTERNAL` 500 |
+| `GET /v1/greetings` | implement | public | optional `limit` 1..100 default 20; optional opaque `cursor` | `200` object with `greetings` newest first, `next_cursor`, `has_more` | `VALIDATION_FAILED` 422; `UNAVAILABLE` 503; `INTERNAL` 500 |
+
+**Validation error details** — use existing error shape. For empty or missing fields return `VALIDATION_FAILED` with field detail `REQUIRED`. For over-limit fields return `VALIDATION_FAILED` with field detail `TOO_LONG`. Invalid JSON, non-string fields, unsupported content type, or body over 16 KiB return `BAD_REQUEST`.
+
+**Migration plan for this story** — no new migration. Forward: no database change; use existing `001_create_greetings`. Backward: no database change. Safe on populated table: yes, because service change only reads and writes existing schema.
+
+## 11. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
