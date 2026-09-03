@@ -219,7 +219,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	limit, cursor, errResp := parseListParams(r)
 	if errResp != nil {
-		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Query parameters are invalid.", errResp)
+		writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Query parameters are invalid.", errResp)
 		return
 	}
 
