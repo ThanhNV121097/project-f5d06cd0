@@ -51,7 +51,6 @@ export default function PersistGreetings() {
     }
 
     try {
-      await saveGreeting({ name: trimmedName, message: trimmedMessage });
       await loadData();
       setName("");
       setMessage("");
