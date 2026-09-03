@@ -26,7 +26,7 @@ export default function PersistGreetings() {
 
   async function loadData() {
     try {
-      const [helloResponse, greetingResponse] = await Promise.all([fetchHello(), fetchGreetings()]);
+      const [helloResponse, greetingResponse] = await Promise.all([fetchHello(name), fetchGreetings()]);
       setHello(helloResponse.message);
       setGreetings(greetingResponse.greetings);
       setApiError("");
