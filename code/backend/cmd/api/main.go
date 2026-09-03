@@ -255,6 +255,22 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeAPIError(w http.ResponseWriter, status int, code, message string, details []apiErrorDetail, requestID string) { var body apiError; body.Error.Code = code; body.Error.Message = message; body.Error.Details = details; body.Error.RequestID = requestID; writeJSON(w, status, body) }
 
+func apiRequestID(r *http.Request) string {
+	if v := strings.TrimSpace(r.Header.Get("X-Request-Id")); v != "" {
+		return v
+	}
+	var b [12]byte
+	_, _ = rand.Read(b[:])
+	return hex.EncodeToString(b[:])
+}
+
+func addRequestID(w http.ResponseWriter, id string) {
+	if id != "" {
+		w.Header().Set("X-Request-Id", id)
+	}
+}
+
+
 func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
 	if _, err := db.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())`); err != nil { return err }
 	entries, err := fs.ReadDir(migrations.FS, ".")
