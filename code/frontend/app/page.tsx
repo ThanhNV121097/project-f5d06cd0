@@ -66,7 +66,7 @@ export default function Home() {
       await loadHello(helloName);
       setError(null);
     } catch {
-      setError("API unreachable. Check backend is running, then reload.");
+      setError(unreachableMessage);
     }
   }
 
