@@ -4,13 +4,13 @@ import { FormEvent, useEffect, useState } from "react";
 import styles from "./HelloApiDemo.module.css";
 import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/mock/hello-api";
 
-type ApiStatus = "loading" | "ready" | "error";
+type ApiStatus = "ready" | "error";
 
 const LIMITS = { name: 80, message: 240 };
 
 export default function HelloApiDemo() {
   const [apiError, setApiError] = useState<string | null>(null);
-  const [status, setStatus] = useState<ApiStatus>("loading");
+  const [status, setStatus] = useState<ApiStatus | null>(null);
   const [helloMessage, setHelloMessage] = useState("Hello, World!");
   const [greetings, setGreetings] = useState<Greeting[]>([]);
   const [saving, setSaving] = useState(false);
@@ -71,11 +71,13 @@ export default function HelloApiDemo() {
           <h1 className={styles.title}>Say hello, save greetings, prove DB persistence.</h1>
           <p className={styles.lead}>Clean demo page pulls live hello text from API, submits greetings to backend, and refreshes stored greetings list after save.</p>
         </div>
-        <div className={styles.pillRow} aria-label="API status">
-          <span className={`${styles.pill} ${status === "error" ? styles.pillError : styles.pillOk}`}>
-            <span className={styles.dot} />{status === "loading" ? "Loading API" : status === "error" ? "API unreachable" : "Health: ok"}
-          </span>
-        </div>
+        {status ? (
+          <div className={styles.pillRow} aria-label="API status">
+            <span className={`${styles.pill} ${status === "error" ? styles.pillError : styles.pillOk}`}>
+              <span className={styles.dot} />{status === "error" ? "API unreachable" : "Health: ok"}
+            </span>
+          </div>
+        ) : null}
       </section>
 
       <section className={styles.grid}>
@@ -123,3 +125,4 @@ export default function HelloApiDemo() {
     </main>
   );
 }
+
