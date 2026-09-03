@@ -123,7 +123,7 @@ Hello page adds no new database entity or column. It reads `GET /v1/hello`, crea
 |---|---|---|---|
 | Hello page data needs | No database change | No database change | Yes; no schema or data mutation |
 
-## 10. Story extension — Hello API
+## 11. Story extension — Hello API
 
 Hello API adds no database entity, column, relationship, constraint, or index. `GET /v1/health` and `GET /v1/hello` are stateless reads and do not touch PostgreSQL.
 
