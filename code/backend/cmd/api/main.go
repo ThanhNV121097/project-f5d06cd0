@@ -197,7 +197,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	args := []any{}
-	query := `SELECT id::text, name, message, created_at FROM greetings`
+	query := `SELECT id::text, name, message, created_at, updated_at FROM greetings`
 	if raw := r.URL.Query().Get("cursor"); raw != "" {
 		payload, err := decodeCursor(raw)
 		if err != nil { writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}}); return }
