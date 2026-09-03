@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import styles from "./HelloPage.module.css";
-import { useEffect, useMemo, useState } from "react";
 import {
   apiIsReachable,
   createGreeting,
