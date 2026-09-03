@@ -167,15 +167,14 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
 		return
 	}
-	var input createGreetingInput
+	var input struct {
+		Name    string `json:"name"`
+		Message string `json:"message"`
+	}
 	dec := json.NewDecoder(strings.NewReader(string(body)))
 	if err := dec.Decode(&input); err != nil {
 		if errors.Is(err, io.EOF) {
 			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
-			return
-		}
-		if strings.Contains(err.Error(), "unknown field") {
-			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body contains unknown fields.", nil)
 			return
 		}
 		if strings.Contains(err.Error(), "cannot unmarshal") || strings.Contains(err.Error(), "invalid character") || strings.Contains(err.Error(), "number") {
@@ -190,7 +189,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name, message, details := validateGreetingInput(input)
+	name, message, details := validateGreetingInput(createGreetingInput(input))
 	if len(details) > 0 {
 		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Greeting is invalid.", details)
 		return
