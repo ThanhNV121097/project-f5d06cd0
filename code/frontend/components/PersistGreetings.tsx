@@ -6,7 +6,7 @@ import {
   fetchHello,
   saveGreeting,
   type Greeting,
-} from "../lib/api/persist-greetings";
+} from "../lib/mock/persist-greetings";
 import styles from "./PersistGreetings.module.css";
 
 const nameLimit = 80;
@@ -52,7 +52,8 @@ export default function PersistGreetings() {
 
     try {
       await saveGreeting({ name: trimmedName, message: trimmedMessage });
-      await loadData();
+      const response = await fetchGreetings();
+      setGreetings(response.greetings);
       setName("");
       setMessage("");
       setFormError("");
