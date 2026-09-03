@@ -164,7 +164,6 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	}
 	var input createGreetingInput
 	dec := json.NewDecoder(strings.NewReader(string(body)))
-	dec.DisallowUnknownFields()
 	if err := dec.Decode(&input); err != nil {
 		if errors.Is(err, io.EOF) {
 			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
