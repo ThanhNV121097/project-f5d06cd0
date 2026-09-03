@@ -192,7 +192,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := dec.Decode(&struct{}{}); err != io.EOF {
-		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be a single JSON object.", nil)
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be a single JSON object.", nil)
 		return
 	}
 
