@@ -3,6 +3,7 @@
   display: grid;
   place-items: center;
   padding: var(--space-8) var(--space-4);
+  background: var(--color-bg);
 }
 
 .shell {
@@ -23,7 +24,7 @@
   color: var(--color-text-muted);
   font-size: var(--text-xs);
   font-weight: var(--font-weight-heading);
-  letter-spacing: .14em;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
 }
 
@@ -89,7 +90,7 @@
 }
 
 .pillError {
-  border-color: color-mix(in srgb, var(--color-danger) 30%, white);
+  border-color: var(--color-danger);
   color: var(--color-danger);
 }
 
@@ -107,9 +108,9 @@
 
 .helloBox {
   border-radius: var(--radius-lg);
-  border: var(--border-width) solid color-mix(in srgb, var(--color-primary) 18%, white);
+  border: var(--border-width) solid var(--color-border);
   padding: var(--space-5);
-  background: linear-gradient(135deg, #eef2ff, #ecfeff);
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-bg) 100%);
 }
 
 .helloText {
@@ -137,7 +138,14 @@
   border: var(--border-width) solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
-  padding: 12px 14px;
+  padding: var(--space-3) var(--space-4);
+}
+
+.field input:focus,
+.field textarea:focus,
+.button:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .field textarea {
@@ -149,7 +157,7 @@
   min-height: 44px;
   border: 0;
   border-radius: var(--radius-sm);
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   background: var(--color-primary);
   color: var(--color-primary-text);
   font-weight: var(--font-weight-medium);
@@ -162,15 +170,15 @@
 }
 
 .button:disabled {
-  opacity: .7;
+  opacity: 0.7;
 }
 
 .errorBox {
   margin-bottom: var(--space-4);
   border-radius: var(--radius-md);
-  border: var(--border-width) solid #fecaca;
-  background: #fef2f2;
-  color: #9f1239;
+  border: var(--border-width) solid color-mix(in srgb, var(--color-danger) 20%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+  color: color-mix(in srgb, var(--color-danger) 88%, black);
   padding: var(--space-4);
 }
 
@@ -216,3 +224,4 @@
     grid-template-columns: 1fr;
   }
 }
+
