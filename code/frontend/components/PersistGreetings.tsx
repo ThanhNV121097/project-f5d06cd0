@@ -145,7 +145,7 @@ export default function PersistGreetings() {
           <div className={styles.emptyState}>No greetings yet. Submit first one above.</div>
         )}
       </section>
-    </main>
+    </section>
   );
 }
 
