@@ -6,7 +6,7 @@ import {
   fetchHello,
   saveGreeting,
   type Greeting,
-} from "../lib/mock/persist-greetings";
+} from "../lib/api/persist-greetings";
 import styles from "./PersistGreetings.module.css";
 
 const nameLimit = 80;
