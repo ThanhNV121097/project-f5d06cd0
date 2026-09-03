@@ -188,7 +188,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
 			return
 		}
-		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
 	if err := dec.Decode(&struct{}{}); err != io.EOF {
