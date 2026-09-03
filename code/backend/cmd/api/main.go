@@ -316,8 +316,20 @@ func respondDBError(w http.ResponseWriter, r *http.Request, err error) {
 func decodeCursor(raw string) (cursorPayload, error) {
 	var payload cursorPayload
 	b, err := base64.RawURLEncoding.DecodeString(raw)
-	if err != nil { return payload, err }
-	if err := json.Unmarshal(b, &payload); err != nil { return payload, err }
+	if err != nil {
+		return payload, err
+	}
+	dec := json.NewDecoder(strings.NewReader(string(b)))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&payload); err != nil {
+		return payload, err
+	}
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return payload, errors.New("extra cursor data")
+	}
+	if strings.TrimSpace(payload.CreatedAt) == "" || strings.TrimSpace(payload.ID) == "" {
+		return payload, errors.New("missing cursor fields")
+	}
 	return payload, nil
 }
 
