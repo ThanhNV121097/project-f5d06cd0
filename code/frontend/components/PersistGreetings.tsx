@@ -63,7 +63,7 @@ export default function PersistGreetings() {
   }
 
   return (
-    <main className={styles.page}>
+    <section className={styles.page} aria-label="Persist greetings demo">
       <section className={styles.hero} aria-labelledby="hello-title">
         <div>
           <p className={styles.kicker}>Hello World demo</p>
