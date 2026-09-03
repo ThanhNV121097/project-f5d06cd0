@@ -198,15 +198,21 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 
 func parseStringField(payload map[string]json.RawMessage, key string) (string, bool) {
 	raw, ok := payload[key]
-	if !ok { return "", false }
+	if !ok {
+		return "", false
+	}
 	var s string
-	if err := json.Unmarshal(raw, &s); err != nil { return "", false }
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return "", false
+	}
 	return s, true
 }
 
 func decodeCursor(raw string, out *cursorPayload) error {
 	data, err := base64.RawURLEncoding.DecodeString(raw)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	return json.Unmarshal(data, out)
 }
 
