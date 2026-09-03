@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hello World Demo</title>
+  <style>
+    :root{--bg:#f8fafc;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#4f46e5;--accent-2:#14b8a6;--good:#16a34a;--bad:#dc2626;--shadow:0 18px 50px rgba(15,23,42,.08);--radius:22px}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font:16px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:linear-gradient(180deg,#fff 0%,var(--bg) 100%)}
+    a{color:inherit} button,input,textarea{font:inherit} :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 70%, white);outline-offset:3px}
+    .wrap{max-width:1120px;margin:0 auto;padding:24px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0 28px}.brand{display:flex;gap:12px;align-items:center}.mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 10px 25px rgba(79,70,229,.25)}
+    .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)} h1{margin:.1rem 0 0;font-size:clamp(2rem,4vw,4rem);line-height:1.05} .lead{max-width:58ch;color:var(--muted);font-size:1.05rem}
+    .statusbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.pill{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;background:#fff}.dot{width:10px;height:10px;border-radius:50%}.dot.good{background:var(--good)}.dot.bad{background:var(--bad)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}.panel{background:var(--card);border:1px solid rgba(226,232,240,.9);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .hero{padding:34px}.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}.btn{border:0;border-radius:14px;padding:12px 16px;background:var(--accent);color:#fff;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}.btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(79,70,229,.22)}.btn.secondary{background:#e0e7ff;color:#1e1b4b}.btn.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
+    .card{padding:22px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.section-title h2{margin:0;font-size:1.05rem}.section-title p{margin:.25rem 0 0;color:var(--muted);font-size:.95rem}
+    .hello{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eef2ff,#ecfeff);border:1px solid #dbeafe}.hello strong{font-size:1.4rem}
+    form{display:grid;gap:12px;margin-top:16px}.field{display:grid;gap:8px}.field label{font-weight:600;font-size:.94rem}.field input,.field textarea{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff;color:var(--text)}.field textarea{min-height:100px;resize:vertical}
+    .errors{display:none;padding:12px 14px;border-radius:14px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.errors.show{display:block}
+    .greet-list{display:grid;gap:12px;max-height:520px;overflow:auto;padding-right:4px}.item{padding:16px;border:1px solid var(--line);border-radius:18px;background:#fff;transition:transform .18s ease,opacity .18s ease}.item.new{animation:pop .35s ease}.item:hover{transform:translateY(-1px)}.meta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:.88rem;margin-bottom:8px}.message{white-space:pre-wrap}
+    .empty,.errorbox{padding:26px;border:1px dashed #cbd5e1;border-radius:18px;background:#f8fafc;color:var(--muted)} .errorbox{border-style:solid;border-color:#fecaca;background:#fff1f2;color:#9f1239}
+    .mock{display:grid;gap:12px;margin-top:18px}.mini{display:flex;gap:10px;align-items:center;padding:14px 16px;border-radius:16px;background:#fff;border:1px solid var(--line)}.mini svg{flex:0 0 auto}
+    .footer{padding:22px 2px 6px;color:var(--muted);font-size:.92rem}
+    @keyframes pop{from{transform:translateY(6px);opacity:.3}to{transform:translateY(0);opacity:1}}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}.hero{padding:24px}.wrap{padding:16px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand"><div class="mark" aria-hidden="true"></div><div><div class="eyebrow">Hello World demo</div><strong>Full-stack proof, end to end</strong></div></div>
+      <div class="statusbar" aria-label="API status">
+        <span class="pill"><span class="dot good"></span>Health: ok</span>
+        <span class="pill"><span class="dot bad"></span>API unreachable state</span>
+      </div>
+    </header>
+
+    <section class="panel hero" id="overview">
+      <div class="grid">
+        <div>
+          <div class="eyebrow">One page</div>
+          <h1>Say hello, save greetings, prove DB persistence.</h1>
+          <p class="lead">Clean demo page pulls live hello text from API, submits greetings to backend, and refreshes stored greetings list after save. Friendly error state shows when API is down.</p>
+          <div class="cta">
+            <a class="btn" href="#hello">View live hello</a>
+            <a class="btn secondary" href="#form">Add greeting</a>
+            <a class="btn ghost" href="#list">See stored greetings</a>
+          </div>
+        </div>
+        <div class="mock" aria-label="System snapshot">
+          <div class="mini"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="11" fill="#e0e7ff"/><path d="M10 18l4 4 10-10" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div><strong>GET /api/health</strong><div class="lead" style="margin:0;font-size:.92rem">Returns {"status":"ok"}</div></div></div>
+          <div class="mini"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="11" fill="#ccfbf1"/><path d="M17 9v8l5 3" fill="none" stroke="#14b8a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><div><strong>POST /api/greetings</strong><div class="lead" style="margin:0;font-size:.92rem">Saves name, message, created_at</div></div></div>
+          <div class="mini"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="11" fill="#fee2e2"/><path d="M11 11l12 12M23 11L11 23" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/></svg><div><strong>Friendly failure</strong><div class="lead" style="margin:0;font-size:.92rem">Shows clear message if API unreachable</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:20px;" id="hello">
+      <article class="panel card">
+        <div class="section-title"><div><h2>Live hello</h2><p>Loaded from GET /api/hello</p></div><span class="pill"><span class="dot good"></span>Connected</span></div>
+        <div class="hello"><div><div class="eyebrow">Current response</div><strong id="helloText">Hello, World!</strong></div><button class="btn" id="reloadHello" type="button">Refresh</button></div>
+        <div class="errorbox" id="apiError" style="margin-top:14px;display:none;">API unreachable. Check backend service and try again.</div>
+      </article>
+
+      <article class="panel card" id="form">
+        <div class="section-title"><div><h2>Add greeting</h2><p>Validates short, non-empty name and message</p></div></div>
+        <div class="errors" id="formError">Name and message must be filled and kept short.</div>
+        <form id="greetForm" novalidate>
+          <div class="field"><label for="name">Name</label><input id="name" name="name" maxlength="60" autocomplete="name" placeholder="Ada" /></div>
+          <div class="field"><label for="message">Message</label><textarea id="message" name="message" maxlength="120" placeholder="Hello from the browser"></textarea></div>
+          <button class="btn" type="submit">Save greeting</button>
+        </form>
+      </article>
+    </section>
+
+    <section class="panel card" id="list" style="margin-top:20px;">
+      <div class="section-title"><div><h2>Stored greetings</h2><p>Newest first from GET /api/greetings</p></div><span class="pill">Refreshes after submit</span></div>
+      <div class="greet-list" id="listView">
+        <div class="item new"><div class="meta"><strong>Ada</strong><span>2025-01-15 10:24</span></div><div class="message">Hello from the database</div></div>
+        <div class="item"><div class="meta"><strong>Lin</strong><span>2025-01-15 09:58</span></div><div class="message">Hello, World!</div></div>
+        <div class="empty" id="emptyState" style="display:none;">No greetings yet. Submit first one above.</div>
+      </div>
+    </section>
+
+    <div class="footer">Design uses calm indigo, teal, white, slate text, and soft red for error state. Light motion only.</div>
+  </div>
+
+  <script>
+    const helloText = document.getElementById('helloText');
+    const apiError = document.getElementById('apiError');
+    const formError = document.getElementById('formError');
+    const listView = document.getElementById('listView');
+    const emptyState = document.getElementById('emptyState');
+    const form = document.getElementById('greetForm');
+    const reloadHello = document.getElementById('reloadHello');
+    const nameInput = document.getElementById('name');
+    const msgInput = document.getElementById('message');
+
+    const state = { offline: false, greetings: [
+      {name:'Ada', message:'Hello from the database', created_at:'2025-01-15 10:24'},
+      {name:'Lin', message:'Hello, World!', created_at:'2025-01-15 09:58'}
+    ] };
+
+    function renderList(){
+      listView.querySelectorAll('.item').forEach(el => el.remove());
+      emptyState.style.display = state.greetings.length ? 'none' : 'block';
+      state.greetings.forEach((g, i) => {
+        const el = document.createElement('div');
+        el.className = 'item' + (i===0 ? ' new' : '');
+        el.innerHTML = `<div class="meta"><strong>${escapeHtml(g.name)}</strong><span>${escapeHtml(g.created_at)}</span></div><div class="message">${escapeHtml(g.message)}</div>`;
+        listView.prepend(el);
+      });
+    }
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]))}
+    function showOffline(on){ apiError.style.display = on ? 'block' : 'none'; }
+    function loadHello(){
+      if (state.offline) { showOffline(true); helloText.textContent = 'Hello, World!'; return; }
+      showOffline(false); helloText.textContent = 'Hello, World!';
+      setTimeout(()=>{ helloText.textContent = 'Hello, World!'; }, 250);
+    }
+    reloadHello.addEventListener('click', loadHello);
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      const message = msgInput.value.trim();
+      const ok = name && message && name.length <= 60 && message.length <= 120;
+      formError.classList.toggle('show', !ok);
+      if (!ok) return;
+      const row = {name, message, created_at:'just now'};
+      state.greetings.unshift(row);
+      renderList();
+      form.reset();
+      listView.querySelector('.item')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+    renderList();
+    loadHello();
+  </script>
+</body>
+</html>
