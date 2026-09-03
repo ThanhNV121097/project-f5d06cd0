@@ -2,21 +2,76 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ThanhNV121097/project-f5d06cd0/backend/migrations"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const (
+	maxRequestBodyBytes = 16 << 10
+	nameLimit           = 80
+	messageLimit        = 240
+	defaultListLimit    = 20
+	maxListLimit        = 100
 )
 
 type server struct {
 	db *pgxpool.Pool
+}
+
+type apiError struct {
+	Code    string        `json:"code"`
+	Message string        `json:"message"`
+	Details []fieldDetail `json:"details,omitempty"`
+}
+
+type fieldDetail struct {
+	Field   string `json:"field"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type errorResponse struct {
+	Error apiError `json:"error"`
+}
+
+type greeting struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Message   string `json:"message"`
+	CreatedAt string `json:"created_at"`
+}
+
+type greetingListResponse struct {
+	Greetings  []greeting `json:"greetings"`
+	NextCursor *string    `json:"next_cursor"`
+	HasMore    bool       `json:"has_more"`
+}
+
+type cursorPayload struct {
+	CreatedAt string `json:"created_at"`
+	ID        string `json:"id"`
+}
+
+type createGreetingInput struct {
+	Name    string `json:"name"`
+	Message string `json:"message"`
 }
 
 func main() {
@@ -41,10 +96,14 @@ func main() {
 	srv := server{db: db}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", srv.healthz)
+	mux.HandleFunc("GET /v1/health", srv.health)
+	mux.HandleFunc("GET /v1/hello", srv.hello)
+	mux.HandleFunc("POST /v1/greetings", srv.createGreeting)
+	mux.HandleFunc("GET /v1/greetings", srv.listGreetings)
 
 	addr := ":" + listenPort()
 	log.Printf("listening on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, requestLogger(mux)); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -59,6 +118,18 @@ func listenPort() string {
 	return "8080"
 }
 
+func requestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		_ = start
+	})
+}
+
+func (s server) health(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 func (s server) healthz(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
@@ -68,8 +139,185 @@ func (s server) healthz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(`{"status":"ok"}`))
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s server) hello(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
+	if utf8.RuneCountInString(name) > nameLimit {
+		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Name is too long.", []fieldDetail{{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."}})
+		return
+	}
+	if name == "" {
+		name = "World"
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": fmt.Sprintf("Hello, %s!", name)})
+}
+
+func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
+	if ct := r.Header.Get("Content-Type"); ct != "" && !strings.HasPrefix(ct, "application/json") {
+		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
+		return
+	}
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxRequestBodyBytes+1))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body could not be read.", nil)
+		return
+	}
+	if len(body) > maxRequestBodyBytes {
+		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
+		return
+	}
+	var input createGreetingInput
+	dec := json.NewDecoder(strings.NewReader(string(body)))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&input); err != nil {
+		if strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "cannot unmarshal") {
+			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
+			return
+		}
+		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
+		return
+	}
+	if dec.More() {
+		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be a single JSON object.", nil)
+		return
+	}
+
+	name, message, details := validateGreetingInput(input)
+	if len(details) > 0 {
+		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Greeting is invalid.", details)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	var created greeting
+	err = s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&created.ID, &created.Name, &created.Message, &created.CreatedAt)
+	if err != nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+		return
+	}
+
+	w.Header().Set("Location", "/v1/greetings/"+created.ID)
+	writeJSON(w, http.StatusCreated, created)
+}
+
+func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
+	limit, cursor, errResp := parseListParams(r)
+	if errResp != nil {
+		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Query parameters are invalid.", errResp)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	query := `SELECT id, name, message, created_at FROM greetings`
+	args := []any{}
+	if cursor != nil {
+		query += ` WHERE (created_at, id) < ($1, $2)`
+		args = append(args, cursor.CreatedAt, cursor.ID)
+	}
+	query += ` ORDER BY created_at DESC, id DESC LIMIT $` + strconv.Itoa(len(args)+1)
+	args = append(args, limit+1)
+
+	rows, err := s.db.Query(ctx, query, args...)
+	if err != nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+		return
+	}
+	defer rows.Close()
+
+	items := make([]greeting, 0, limit+1)
+	for rows.Next() {
+		var item greeting
+		if err := rows.Scan(&item.ID, &item.Name, &item.Message, &item.CreatedAt); err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
+			return
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
+		return
+	}
+
+	hasMore := len(items) > limit
+	if hasMore {
+		items = items[:limit]
+	}
+	var nextCursor *string
+	if hasMore && len(items) > 0 {
+		payload := cursorPayload{CreatedAt: items[len(items)-1].CreatedAt, ID: items[len(items)-1].ID}
+		encoded, _ := encodeCursor(payload)
+		nextCursor = &encoded
+	}
+	writeJSON(w, http.StatusOK, greetingListResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
+}
+
+func validateGreetingInput(input createGreetingInput) (string, string, []fieldDetail) {
+	name := strings.TrimSpace(input.Name)
+	message := strings.TrimSpace(input.Message)
+	var details []fieldDetail
+	if name == "" {
+		details = append(details, fieldDetail{Field: "name", Code: "REQUIRED", Message: "Name is required."})
+	} else if utf8.RuneCountInString(name) > nameLimit {
+		details = append(details, fieldDetail{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."})
+	}
+	if message == "" {
+		details = append(details, fieldDetail{Field: "message", Code: "REQUIRED", Message: "Message is required."})
+	} else if utf8.RuneCountInString(message) > messageLimit {
+		details = append(details, fieldDetail{Field: "message", Code: "TOO_LONG", Message: "Message must be 240 characters or fewer."})
+	}
+	return name, message, details
+}
+
+func parseListParams(r *http.Request) (int, *cursorPayload, []fieldDetail) {
+	limit := defaultListLimit
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 || parsed > maxListLimit {
+			return 0, nil, []fieldDetail{{Field: "limit", Code: "INVALID", Message: "Limit must be between 1 and 100."}}
+		}
+		limit = parsed
+	}
+	if raw := r.URL.Query().Get("cursor"); raw != "" {
+		cursor, err := decodeCursor(raw)
+		if err != nil {
+			return 0, nil, []fieldDetail{{Field: "cursor", Code: "INVALID", Message: "Cursor is invalid."}}
+		}
+		return limit, cursor, nil
+	}
+	return limit, nil, nil
+}
+
+func encodeCursor(p cursorPayload) (string, error) {
+	b, err := json.Marshal(p)
+	if err != nil { return "", err }
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+func decodeCursor(raw string) (*cursorPayload, error) {
+	b, err := base64.RawURLEncoding.DecodeString(raw)
+	if err != nil { return nil, err }
+	var p cursorPayload
+	if err := json.Unmarshal(b, &p); err != nil { return nil, err }
+	if p.CreatedAt == "" || p.ID == "" { return nil, errors.New("cursor incomplete") }
+	return &p, nil
+}
+
+func writeAPIError(w http.ResponseWriter, status int, code, message string, details []fieldDetail) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(errorResponse{Error: apiError{Code: code, Message: message, Details: details}})
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
 }
 
 func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
@@ -125,3 +373,4 @@ func applyMigration(ctx context.Context, db *pgxpool.Pool, name string) error {
 	}
 	return tx.Commit(ctx)
 }
+
