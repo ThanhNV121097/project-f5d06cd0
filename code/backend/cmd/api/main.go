@@ -241,7 +241,11 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil {
-		writeAPIError(w, r, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || isUnavailableDBError(err) {
+			writeAPIError(w, r, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+			return
+		}
+		writeAPIError(w, r, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
 		return
 	}
 	defer rows.Close()
