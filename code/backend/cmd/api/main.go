@@ -268,7 +268,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 		encoded, _ := encodeCursor(payload)
 		nextCursor = &encoded
 	}
-	writeJSON(w, http.StatusOK, greetingListResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
+	writeJSON(w, r, http.StatusOK, greetingListResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
 }
 
 func validateGreetingInput(input createGreetingInput) (string, string, []fieldDetail) {
