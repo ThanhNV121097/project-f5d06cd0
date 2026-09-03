@@ -19,12 +19,13 @@ const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 const unreachableMessage = "API unreachable. Check backend is running, then reload.";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${apiBase}${path}`, {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type") && init?.body) {
+    headers.set("Content-Type", "application/json");
+  }
+  const res = await fetch(`${apiBase}/v1${path}`, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {})
-    }
+    headers
   });
   if (!res.ok) throw new Error("API unreachable");
   return res.json() as Promise<T>;
