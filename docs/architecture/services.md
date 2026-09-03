@@ -356,7 +356,7 @@ No third-party integrations.
 
 Hello page adds no new backend endpoint. It consumes existing public endpoints: `GET /v1/hello`, `POST /v1/greetings`, and `GET /v1/greetings`.
 
-**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-page.ts` exposes:
+**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-api.ts` exposes:
 
 ```ts
 type Greeting = {
@@ -366,9 +366,9 @@ type Greeting = {
   created_at: string;
 };
 
-getHelloMessage(): Promise<{ message: string }>;
+getHello(name?: string): Promise<{ message: string }>;
 createGreeting(input: { name: string; message: string }): Promise<Greeting>;
-listGreetings(): Promise<Greeting[]>;
+getGreetings(): Promise<Greeting[]>;
 ```
 
 Backend contract remains canonical and already covers required method, path, auth, request, response, status codes, and error codes in sections 3.2 through 3.4. Frontend replacement for the mock must adapt two existing service decisions:
@@ -376,11 +376,24 @@ Backend contract remains canonical and already covers required method, path, aut
 | Mock field/shape | Backend v1 shape | Reason |
 |---|---|---|
 | `Greeting.id` number | `Greeting.id` string | Avoid JavaScript integer precision risk for `bigint` database ids |
-| `listGreetings()` returns `Greeting[]` | `GET /v1/greetings` returns `{ greetings, next_cursor, has_more }` | Existing cursor pagination contract supports growth and concurrent writes |
+| `getGreetings()` returns `Greeting[]` | `GET /v1/greetings` returns `{ greetings, next_cursor, has_more }` | Existing cursor pagination contract supports growth and concurrent writes |
 
 No service conflict. No new error format. Friendly unreachable state is triggered by network failure, `UNAVAILABLE`, or `INTERNAL`; validation errors from `POST /v1/greetings` use existing `VALIDATION_FAILED` details and can be shown beside form fields.
 
-## 11. Open questions
+## 11. Story extension — Hello API backend contract
+
+Hello API adds no new backend endpoint beyond existing section 3.1 and 3.2 contracts. Backend work for this story must implement `GET /v1/health` and `GET /v1/hello`; deploy proxy exposes them externally as `/api/health` and `/api/hello`.
+
+**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-api.ts` exposes `getHello(name = "")` returning `{ message: "Hello, <name-or-World>!" }`. Backend response for `GET /v1/hello` matches the mock field name and defaulting behavior. Difference: backend rejects names over 80 Unicode code points with existing `VALIDATION_FAILED` error; mock omits this negative path because UI enforces `maxLength=80`.
+
+| Endpoint | Status for this story | Auth | Request | Success | Errors |
+|---|---|---|---|---|---|
+| `GET /v1/health` | implement | public | no body, no parameters | `200 { "status": "ok" }` | no application JSON error body |
+| `GET /v1/hello` | implement | public | optional query `name`, trimmed, max 80 Unicode code points | `200 { "message": "Hello, World!" }` or `200 { "message": "Hello, <name>!" }` | `VALIDATION_FAILED` 422 for over-limit `name`; `INTERNAL` 500 for unexpected failure |
+
+**Migration plan for this story** — no migration. Forward: no database change. Backward: no database change. Safe on populated table: yes, because endpoints are stateless and do not read or write data.
+
+## 12. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
