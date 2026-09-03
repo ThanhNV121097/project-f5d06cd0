@@ -199,13 +199,13 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var created greeting
-	createdAt := time.Time{}
+	var createdAt time.Time
 	err = s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&created.ID, &created.Name, &created.Message, &createdAt)
 	if err != nil {
 		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
 		return
 	}
-	created.CreatedAt = createdAt.UTC()
+	created.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 	w.Header().Set("Location", "/api/greetings/"+created.ID)
 	writeJSON(w, http.StatusCreated, created)
 }
