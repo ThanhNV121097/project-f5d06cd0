@@ -16,6 +16,7 @@ type ApiGreetingList = {
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const unreachableMessage = "API unreachable. Check backend is running, then reload.";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${apiBase}${path}`, {
