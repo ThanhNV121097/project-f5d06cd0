@@ -73,7 +73,7 @@ export default function HelloApiDemo() {
         </div>
         <div className={styles.pillRow} aria-label="API status">
           <span className={`${styles.pill} ${status === "error" ? styles.pillError : styles.pillOk}`}>
-            <span className={styles.dot} />{status === "error" ? "API unreachable" : "Health: ok"}
+            <span className={styles.dot} />{status === "loading" ? "Loading API" : status === "error" ? "API unreachable" : "Health: ok"}
           </span>
         </div>
       </section>
