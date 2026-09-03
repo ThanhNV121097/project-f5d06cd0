@@ -155,7 +155,7 @@ func (s server) hello(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		name = "World"
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"message": fmt.Sprintf("Hello, %s!", name)})
+	writeJSON(w, r, http.StatusOK, map[string]string{"message": fmt.Sprintf("Hello, %s!", name)})
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
