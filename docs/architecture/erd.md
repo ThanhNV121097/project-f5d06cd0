@@ -103,7 +103,7 @@ Implementation note: enable no extension for this table because `bigint generate
 
 Hello page adds no new database entity or column. It reads `GET /v1/hello`, creates rows through `POST /v1/greetings`, and refreshes the list through `GET /v1/greetings`.
 
-**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-page.ts` exposes `Greeting` with `id`, `name`, `message`, and `created_at`; `getHelloMessage()` returns `{ "message": "Hello, World!" }`; `createGreeting()` returns one stored greeting; `listGreetings()` returns newest-first greetings. Backend uses same fields. Difference: backend encodes `id` as string and wraps list results in `{ greetings, next_cursor, has_more }` per existing service pagination contract; frontend adapter must map this envelope when mock is replaced.
+**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-api.ts` exposes `Greeting` with `id`, `name`, `message`, and `created_at`; `getHello()` returns `{ "message": "Hello, World!" }`; `createGreeting()` returns one stored greeting; `getGreetings()` returns newest-first greetings. Backend uses same fields. Difference: backend encodes `id` as string and wraps list results in `{ greetings, next_cursor, has_more }` per existing service pagination contract; frontend adapter must map this envelope when mock is replaced.
 
 **Migration plan for this story** — no new migration. Existing migration `001_create_greetings` already creates every column and index needed by the Hello page.
 
@@ -111,7 +111,19 @@ Hello page adds no new database entity or column. It reads `GET /v1/hello`, crea
 |---|---|---|---|
 | Hello page data needs | No database change | No database change | Yes; no schema or data mutation |
 
-## 10. Open questions
+## 10. Story extension — Hello API
+
+Hello API adds no database entity, column, relationship, constraint, or index. `GET /v1/health` and `GET /v1/hello` are stateless reads and do not touch PostgreSQL.
+
+**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-api.ts` exposes `getHello(name = "")` returning `{ message: "Hello, <name-or-World>!" }`. Backend uses same response field and defaulting rule for `GET /v1/hello`. Health has no mock field because UI only displays derived status.
+
+**Migration plan for this story** — no migration.
+
+| Change | Forward | Backward | Safe on non-empty table |
+|---|---|---|---|
+| Hello API stateless endpoints | No database change | No database change | Yes; no schema or data mutation |
+
+## 11. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
