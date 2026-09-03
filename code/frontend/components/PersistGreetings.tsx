@@ -2,15 +2,23 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import styles from "./PersistGreetings.module.css";
-import {
-  fetchHelloMessage,
-  fetchGreetings,
-  saveGreeting,
-  type Greeting,
-} from "../lib/mock/persist-greetings";
 
+const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 const nameLimit = 80;
 const messageLimit = 240;
+
+type Greeting = {
+  id: string;
+  name: string;
+  message: string;
+  created_at: string;
+};
+
+type ListResponse = {
+  greetings: Greeting[];
+  next_cursor?: string | null;
+  has_more?: boolean;
+};
 
 export default function PersistGreetings() {
   const [greetings, setGreetings] = useState<Greeting[]>([]);
@@ -147,6 +155,28 @@ export default function PersistGreetings() {
       </section>
     </section>
   );
+}
+
+async function fetchHelloMessage() {
+  const response = await fetch(`${apiBase}/v1/hello`, { cache: "no-store" });
+  if (!response.ok) throw new Error("hello failed");
+  return response.json() as Promise<{ message: string }>;
+}
+
+async function fetchGreetings() {
+  const response = await fetch(`${apiBase}/v1/greetings`, { cache: "no-store" });
+  if (!response.ok) throw new Error("greetings failed");
+  return response.json() as Promise<ListResponse>;
+}
+
+async function saveGreeting(input: { name: string; message: string }) {
+  const response = await fetch(`${apiBase}/v1/greetings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) throw new Error("save failed");
+  return response.json() as Promise<Greeting>;
 }
 
 function formatDate(value: string) {
