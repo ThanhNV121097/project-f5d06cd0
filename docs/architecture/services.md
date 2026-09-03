@@ -409,7 +409,7 @@ Backend contract remains canonical and already covers required method, path, aut
 
 No service conflict. No new error format. Friendly unreachable state is triggered by network failure, `UNAVAILABLE`, or `INTERNAL`; validation errors from `POST /v1/greetings` use existing `VALIDATION_FAILED` details and can be shown beside form fields.
 
-## 11. Story extension — Hello API backend contract
+## 12. Story extension — Hello API backend contract
 
 Hello API adds no new backend endpoint beyond existing section 3.1 and 3.2 contracts. Backend work for this story must implement `GET /v1/health` and `GET /v1/hello`; deploy proxy exposes them externally as `/api/health` and `/api/hello`.
 
