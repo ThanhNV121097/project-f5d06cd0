@@ -352,7 +352,35 @@ No third-party integrations.
 | HELLO-004 | `GET /v1/greetings` |
 | HELLO-005 | `GET /v1/health`, `GET /v1/hello`, `POST /v1/greetings`, `GET /v1/greetings` |
 
-## 10. Open questions
+## 10. Story extension — Hello page frontend adapter contract
+
+Hello page adds no new backend endpoint. It consumes existing public endpoints: `GET /v1/hello`, `POST /v1/greetings`, and `GET /v1/greetings`.
+
+**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-page.ts` exposes:
+
+```ts
+type Greeting = {
+  id: number;
+  name: string;
+  message: string;
+  created_at: string;
+};
+
+getHelloMessage(): Promise<{ message: string }>;
+createGreeting(input: { name: string; message: string }): Promise<Greeting>;
+listGreetings(): Promise<Greeting[]>;
+```
+
+Backend contract remains canonical and already covers required method, path, auth, request, response, status codes, and error codes in sections 3.2 through 3.4. Frontend replacement for the mock must adapt two existing service decisions:
+
+| Mock field/shape | Backend v1 shape | Reason |
+|---|---|---|
+| `Greeting.id` number | `Greeting.id` string | Avoid JavaScript integer precision risk for `bigint` database ids |
+| `listGreetings()` returns `Greeting[]` | `GET /v1/greetings` returns `{ greetings, next_cursor, has_more }` | Existing cursor pagination contract supports growth and concurrent writes |
+
+No service conflict. No new error format. Friendly unreachable state is triggered by network failure, `UNAVAILABLE`, or `INTERNAL`; validation errors from `POST /v1/greetings` use existing `VALIDATION_FAILED` details and can be shown beside form fields.
+
+## 11. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
