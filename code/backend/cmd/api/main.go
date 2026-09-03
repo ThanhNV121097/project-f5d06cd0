@@ -181,13 +181,8 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dec := json.NewDecoder(bytes.NewReader(body))
-	dec.DisallowUnknownFields()
 	var input createGreetingInput
 	if err := dec.Decode(&input); err != nil {
-		if strings.Contains(err.Error(), "unknown field") {
-			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain only name and message.", nil)
-			return
-		}
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
