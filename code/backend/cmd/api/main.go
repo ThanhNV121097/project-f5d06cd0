@@ -68,8 +68,8 @@ type cursorPayload struct {
 }
 
 type createGreetingInput struct {
-	Name    string `json:"name"`
-	Message string `json:"message"`
+	Name    string
+	Message string
 }
 
 func main() {
