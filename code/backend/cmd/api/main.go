@@ -131,7 +131,7 @@ func requestLogger(next http.Handler) http.Handler {
 }
 
 func (s server) health(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	writeJSON(w, r, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (s server) healthz(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +143,7 @@ func (s server) healthz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	writeJSON(w, r, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (s server) hello(w http.ResponseWriter, r *http.Request) {
