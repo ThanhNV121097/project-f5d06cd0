@@ -12,7 +12,7 @@ type GreetingsEnvelope = {
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBase}/api${path}`, {
+  const response = await fetch(`${apiBase}/v1${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
