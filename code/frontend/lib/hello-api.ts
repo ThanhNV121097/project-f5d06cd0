@@ -5,7 +5,7 @@ export type Greeting = {
   created_at: string;
 };
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "";
+const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 type GreetingsEnvelope = {
   greetings: Greeting[];
