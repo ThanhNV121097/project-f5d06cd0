@@ -29,6 +29,7 @@ type greeting struct {
 	Name      string `json:"name"`
 	Message   string `json:"message"`
 	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type apiError struct{ Error errorBody `json:"error"` }
