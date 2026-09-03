@@ -135,7 +135,7 @@ Hello API adds no database entity, column, relationship, constraint, or index. `
 |---|---|---|---|
 | Hello API stateless endpoints | No database change | No database change | Yes; no schema or data mutation |
 
-## 11. Open questions
+## 12. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
