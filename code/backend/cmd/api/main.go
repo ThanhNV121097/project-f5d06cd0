@@ -156,8 +156,7 @@ func (s server) getHello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
-	ct := r.Header.Get("Content-Type")
-	if ct == "" || !strings.HasPrefix(ct, "application/json") {
+	if !isJSONContentType(r.Header.Get("Content-Type")) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Content type must be JSON.", nil)
 		return
 	}
@@ -167,7 +166,11 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	dec.DisallowUnknownFields()
 	var req createGreetingRequest
 	if err := dec.Decode(&req); err != nil {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
+		if isBadRequestJSONError(err) {
+			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
+			return
+		}
+		writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Greeting fields are invalid.", nil)
 		return
 	}
 	if err := dec.Decode(&struct{}{}); err != io.EOF {
@@ -197,6 +200,20 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", "/api/greetings/"+g.ID)
 	writeJSON(w, http.StatusCreated, g)
+}
+
+func isJSONContentType(raw string) bool {
+	mediaType := strings.ToLower(strings.TrimSpace(strings.Split(raw, ";")[0]))
+	return mediaType == "application/json"
+}
+
+func isBadRequestJSONError(err error) bool {
+	var syntaxErr *json.SyntaxError
+	var typeErr *json.UnmarshalTypeError
+	if errors.As(err, &syntaxErr) || errors.As(err, &typeErr) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) {
+		return true
+	}
+	return strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "body too large")
 }
 
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
