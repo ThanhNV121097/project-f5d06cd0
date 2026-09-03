@@ -156,11 +156,13 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
+	requestID := requestID(r)
+	withRequestID(w, requestID)
 	limit := 20
 	if raw := r.URL.Query().Get("limit"); raw != "" {
 		n, err := strconv.Atoi(raw)
 		if err != nil || n < 1 || n > 100 {
-			writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "limit", Code: "INVALID", Message: "Limit must be between 1 and 100."}}, "")
+			writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "limit", Code: "INVALID", Message: "Limit must be between 1 and 100."}}, requestID)
 			return
 		}
 		limit = n
@@ -169,7 +171,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	var cursor cursorPayload
 	if raw := r.URL.Query().Get("cursor"); raw != "" {
 		if err := decodeCursor(raw, &cursor); err != nil {
-			writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "cursor", Code: "INVALID", Message: "Cursor is malformed."}}, "")
+			writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "cursor", Code: "INVALID", Message: "Cursor is malformed."}}, requestID)
 			return
 		}
 	}
@@ -187,7 +189,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil {
-		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, "")
+		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, requestID)
 		return
 	}
 	defer rows.Close()
@@ -196,13 +198,13 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var row greeting
 		if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, "")
+			writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, requestID)
 			return
 		}
 		items = append(items, row)
 	}
 	if err := rows.Err(); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, "")
+		writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, requestID)
 		return
 	}
 
