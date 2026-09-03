@@ -5,7 +5,6 @@ export type Greeting = {
   created_at: string;
 };
 
-const helloNames = new Map<string, string>([["", "World"]]);
 const greetings: Greeting[] = [
   { id: 2, name: "Lin", message: "Hello, World!", created_at: "2025-01-15 09:58" },
   { id: 1, name: "Ada", message: "Hello from the database", created_at: "2025-01-15 10:24" },
@@ -13,7 +12,7 @@ const greetings: Greeting[] = [
 
 export async function getHello(name = "") {
   const clean = name.trim();
-  const label = clean || helloNames.get("") || "World";
+  const label = clean || "World";
   return { message: `Hello, ${label}!` };
 }
 
