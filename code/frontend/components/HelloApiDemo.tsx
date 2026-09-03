@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import styles from "./HelloApiDemo.module.css";
-import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/mock/hello-api";
+import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/hello-api";
 
 type ApiStatus = "ready" | "error";
 
@@ -18,21 +18,21 @@ export default function HelloApiDemo() {
 
   const empty = greetings.length === 0;
 
+  async function load() {
+    const [hello, stored] = await Promise.all([getHello(), getGreetings()]);
+    setHelloMessage(hello.message);
+    setGreetings(stored);
+    setStatus("ready");
+    setApiError(null);
+  }
+
   useEffect(() => {
     let live = true;
-    Promise.all([getHello(), getGreetings()])
-      .then(([hello, stored]) => {
-        if (!live) return;
-        setHelloMessage(hello.message);
-        setGreetings(stored);
-        setStatus("ready");
-        setApiError(null);
-      })
-      .catch(() => {
-        if (!live) return;
-        setStatus("error");
-        setApiError("API unreachable. Check backend service and try again.");
-      });
+    load().catch(() => {
+      if (!live) return;
+      setStatus("error");
+      setApiError("API unreachable. Check backend service and try again.");
+    });
     return () => {
       live = false;
     };
@@ -53,8 +53,8 @@ export default function HelloApiDemo() {
     setSaving(true);
     setFormError(null);
     try {
-      const saved = await createGreeting({ name, message });
-      setGreetings((current) => [saved, ...current]);
+      await createGreeting({ name, message });
+      await load();
       form.reset();
     } catch {
       setFormError("Save failed. Try again.");
@@ -83,7 +83,7 @@ export default function HelloApiDemo() {
       <section className={styles.grid}>
         <article className={styles.panel}>
           <h2 className={styles.sectionTitle}>Live hello</h2>
-          <p className={styles.sectionLead}>Loaded from GET /api/hello</p>
+          <p className={styles.sectionLead}>Loaded from GET /v1/hello</p>
           <div className={styles.helloBox}>
             <strong>{helloMessage}</strong>
           </div>
@@ -110,7 +110,7 @@ export default function HelloApiDemo() {
 
       <section className={styles.panel}>
         <h2 className={styles.sectionTitle}>Stored greetings</h2>
-        <p className={styles.sectionLead}>Newest first from GET /api/greetings</p>
+        <p className={styles.sectionLead}>Newest first from GET /v1/greetings</p>
         {empty ? <div className={styles.empty}>No greetings yet. Submit first one above.</div> : (
           <div className={styles.list}>
             {greetings.map((greeting) => (
