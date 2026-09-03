@@ -3,17 +3,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import styles from "./HelloPage.module.css";
 import {
-  apiIsReachable,
   createGreeting,
-  getHelloMessage,
-  listGreetings,
+  getGreetings,
+  getHello,
   type Greeting,
-} from "../lib/mock/hello-page";
+} from "../lib/hello-api";
 
 type Status = "loading" | "ready" | "error";
 
-const NAME_LIMIT = 60;
-const MESSAGE_LIMIT = 120;
+const NAME_LIMIT = 80;
+const MESSAGE_LIMIT = 240;
 
 export default function HelloPage() {
   const [hello, setHello] = useState("Loading hello message...");
@@ -23,39 +22,32 @@ export default function HelloPage() {
   const [message, setMessage] = useState("");
   const [greetings, setGreetings] = useState<Greeting[]>([]);
   const [saving, setSaving] = useState(false);
+  const [helloName, setHelloName] = useState("");
 
   const statusLabel = useMemo(() => {
     if (status === "error") return "API unreachable";
     if (status === "loading") return "Connecting";
-    return apiIsReachable() ? "Connected" : "API unreachable";
+    return "Connected";
   }, [status]);
 
-  useEffect(() => {
-    let alive = true;
-
-    async function load() {
-      try {
-        const [helloResponse, listResponse] = await Promise.all([
-          getHelloMessage(),
-          listGreetings(),
-        ]);
-        if (!alive) return;
-        setHello(helloResponse.message);
-        setGreetings(listResponse);
-        setStatus("ready");
-        setError("");
-      } catch {
-        if (!alive) return;
-        setStatus("error");
-        setError("API unreachable. Check backend service and try again.");
-      }
+  async function load(nameOverride = helloName) {
+    try {
+      const [helloResponse, listResponse] = await Promise.all([
+        getHello(nameOverride),
+        getGreetings(),
+      ]);
+      setHello(helloResponse.message);
+      setGreetings(listResponse);
+      setStatus("ready");
+      setError("");
+    } catch {
+      setStatus("error");
+      setError("API unreachable. Check backend service and try again.");
     }
+  }
 
+  useEffect(() => {
     void load();
-
-    return () => {
-      alive = false;
-    };
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -72,7 +64,7 @@ export default function HelloPage() {
     setError("");
     try {
       await createGreeting({ name: trimmedName, message: trimmedMessage });
-      setGreetings(await listGreetings());
+      await load();
       setName("");
       setMessage("");
     } catch {
@@ -104,6 +96,13 @@ export default function HelloPage() {
           <section className={styles.card} aria-labelledby="hello-heading">
             <h2 id="hello-heading" className={styles.sectionTitle}>Live hello</h2>
             <p className={styles.sectionLead}>Loaded from GET /api/hello.</p>
+            <label className={styles.field} htmlFor="hello-name">
+              <span>Name for GET /api/hello</span>
+              <input id="hello-name" value={helloName} maxLength={NAME_LIMIT} onChange={(event) => setHelloName(event.target.value)} placeholder="Ada" />
+            </label>
+            <button className={styles.button} type="button" onClick={() => void load(helloName)}>
+              Refresh hello
+            </button>
             <div className={styles.helloBox}>
               <p className={styles.helloText}>{hello}</p>
             </div>
