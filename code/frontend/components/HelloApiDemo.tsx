@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import styles from "./HelloApiDemo.module.css";
-import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/mock/hello-api";
+import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/hello-api";
 
 type ApiStatus = "ready" | "error";
 
