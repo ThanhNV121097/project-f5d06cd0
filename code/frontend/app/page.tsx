@@ -1,7 +1,9 @@
+import HelloPage from "../components/HelloPage";
+
 export default function Home() {
   return (
     <main className="app-shell">
-      {/* Story components mount here. */}
+      <HelloPage />
     </main>
   );
 }
