@@ -139,10 +139,10 @@
 .errorBox {
   margin-bottom: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid #fecaca;
+  border: var(--border-width) solid var(--color-danger);
   border-radius: var(--radius-md);
-  background: #fef2f2;
-  color: #9f1239;
+  background: color-mix(in srgb, var(--color-surface) 10%, var(--color-danger) 90%);
+  color: var(--color-danger);
 }
 
 .list {
