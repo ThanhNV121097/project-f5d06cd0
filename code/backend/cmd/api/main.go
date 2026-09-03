@@ -180,9 +180,8 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
-	if dec.More() {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be a single JSON object.", nil)
-		return
+	var extra map[string]json.RawMessage
+	if err := json.NewDecoder(strings.NewReader(string(mustReadBody(req)))).Decode(&extra); err == nil && len(extra) == 0 {
 	}
 	name, nameErr := validateText(req.Name, "name", maxNameLen)
 	message, msgErr := validateText(req.Message, "message", maxMessageLen)
