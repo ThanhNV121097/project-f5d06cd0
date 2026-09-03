@@ -16,7 +16,7 @@ export default function HelloApiDemo() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const empty = useMemo(() => greetings.length === 0, [greetings]);
+  const empty = greetings.length === 0;
 
   useEffect(() => {
     let live = true;
