@@ -59,9 +59,21 @@ type greetingsResponse struct {
 	HasMore    bool       `json:"has_more"`
 }
 
-type cursorPayload struct {
-	CreatedAt string `json:"created_at"`
-	ID        string `json:"id"`
+type requestIDKey struct{}
+
+func requestID(r *http.Request) string {
+	if v := strings.TrimSpace(r.Header.Get("X-Request-Id")); v != "" {
+		return v
+	}
+	var b [12]byte
+	_, _ = rand.Read(b[:])
+	return hex.EncodeToString(b[:])
+}
+
+func withRequestID(w http.ResponseWriter, id string) {
+	if id != "" {
+		w.Header().Set("X-Request-Id", id)
+	}
 }
 
 func main() {
