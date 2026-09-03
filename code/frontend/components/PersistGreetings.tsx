@@ -52,7 +52,8 @@ export default function PersistGreetings() {
 
     try {
       const saved = await saveGreeting({ name: trimmedName, message: trimmedMessage });
-      setGreetings((current) => [saved, ...current]);
+      setHello((current) => current);
+      await loadData();
       setName("");
       setMessage("");
       setFormError("");
