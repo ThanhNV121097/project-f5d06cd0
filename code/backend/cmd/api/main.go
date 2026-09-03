@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"errors"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
