@@ -113,7 +113,7 @@ func applyMigration(ctx context.Context, db *pgxpool.Pool, name string) error {
 		return tx.Commit(ctx)
 	}
 
-	sqlBytes, err := fs.ReadFile(migrationFiles, "migrations/"+name)
+	sqlBytes, err := fs.ReadFile(migrations.FS, name)
 	if err != nil {
 		return err
 	}
