@@ -34,9 +34,10 @@ type server struct {
 }
 
 type apiError struct {
-	Code    string        `json:"code"`
-	Message string        `json:"message"`
-	Details []fieldDetail `json:"details,omitempty"`
+	Code      string        `json:"code"`
+	Message   string        `json:"message"`
+	Details   []fieldDetail `json:"details,omitempty"`
+	RequestID string        `json:"request_id,omitempty"`
 }
 
 type fieldDetail struct {
