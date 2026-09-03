@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import styles from "./HelloApiDemo.module.css";
 import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/mock/hello-api";
 
