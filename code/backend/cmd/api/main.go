@@ -172,12 +172,13 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		Message string `json:"message"`
 	}
 	dec := json.NewDecoder(strings.NewReader(string(body)))
+	dec.DisallowUnknownFields()
 	if err := dec.Decode(&input); err != nil {
 		if errors.Is(err, io.EOF) {
 			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 			return
 		}
-		if strings.Contains(err.Error(), "cannot unmarshal") || strings.Contains(err.Error(), "invalid character") || strings.Contains(err.Error(), "number") {
+		if strings.Contains(err.Error(), "cannot unmarshal") || strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "invalid character") || strings.Contains(err.Error(), "number") {
 			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
 			return
 		}
