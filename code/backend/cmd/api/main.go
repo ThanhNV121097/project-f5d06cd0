@@ -347,6 +347,17 @@ func requestIDFromContext(ctx context.Context) string {
 	return value
 }
 
+func isUnavailableDBError(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		switch pgErr.Code {
+		case "57P01", "57P02", "57P03", "53300", "55006":
+			return true
+		}
+	}
+	return false
+}
+
 func writeAPIError(w http.ResponseWriter, r *http.Request, status int, code, message string, details []fieldDetail) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	requestID := requestIDFromContext(r.Context())
