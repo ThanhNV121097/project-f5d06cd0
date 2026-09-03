@@ -319,7 +319,6 @@ func decodeCursor(raw string) (cursorPayload, error) {
 		return payload, err
 	}
 	dec := json.NewDecoder(strings.NewReader(string(b)))
-	dec.DisallowUnknownFields()
 	if err := dec.Decode(&payload); err != nil {
 		return payload, err
 	}
