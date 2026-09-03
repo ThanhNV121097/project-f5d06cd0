@@ -1,7 +1,5 @@
 package main
 
-package main
-
 import (
 	"context"
 	"encoding/base64"
@@ -22,7 +20,6 @@ import (
 	"github.com/ThanhNV121097/project-f5d06cd0/backend/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
 
 const (
 	maxRequestBodyBytes = 16 << 10
