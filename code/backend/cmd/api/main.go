@@ -117,12 +117,16 @@ func (s server) healthz(w http.ResponseWriter, r *http.Request) { ctx, cancel :=
 func (s server) apiHealth(w http.ResponseWriter, r *http.Request) { writeJSON(w, http.StatusOK, map[string]string{"status":"ok"}) }
 
 func (s server) apiHello(w http.ResponseWriter, r *http.Request) {
+	requestID := requestID(r)
+	withRequestID(w, requestID)
 	name := strings.TrimSpace(r.URL.Query().Get("name"))
 	if utf8.RuneCountInString(name) > 80 {
-		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."}}, "")
+		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."}}, requestID)
 		return
 	}
-	if name == "" { name = "World" }
+	if name == "" {
+		name = "World"
+	}
 	writeJSON(w, http.StatusOK, helloResponse{Message: "Hello, " + name + "!"})
 }
 
