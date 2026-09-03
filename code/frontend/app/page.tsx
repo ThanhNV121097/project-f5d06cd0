@@ -1,7 +1,9 @@
+import PersistGreetings from "../components/PersistGreetings";
+
 export default function Home() {
   return (
     <main className="app-shell">
-      {/* Story components mount here. */}
+      <PersistGreetings />
     </main>
   );
 }
