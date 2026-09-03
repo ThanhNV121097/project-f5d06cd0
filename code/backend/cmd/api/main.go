@@ -117,11 +117,16 @@ func listenPort() string {
 	return "8080"
 }
 
+type requestIDKey struct{}
+
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
-		_ = start
+		requestID := r.Header.Get("X-Request-Id")
+		if requestID == "" {
+			requestID = strconv.FormatInt(time.Now().UnixNano(), 36)
+		}
+		ctx := context.WithValue(r.Context(), requestIDKey{}, requestID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
