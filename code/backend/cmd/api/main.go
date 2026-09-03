@@ -55,7 +55,7 @@ type helloResponse struct {
 
 type greetingsResponse struct {
 	Greetings  []greeting `json:"greetings"`
-	NextCursor *string    `json:"next_cursor"`
+	NextCursor *string    `json:"next_cursor,omitempty"`
 	HasMore    bool       `json:"has_more"`
 }
 
