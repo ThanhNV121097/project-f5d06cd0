@@ -166,7 +166,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	}
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxRequestBodyBytes+1))
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body could not be read.", nil)
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body could not be read.", nil)
 		return
 	}
 	if len(body) > maxRequestBodyBytes {
