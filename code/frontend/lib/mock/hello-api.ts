@@ -1,27 +1,44 @@
 export type Greeting = {
-  id: number;
+  id: string;
   name: string;
   message: string;
   created_at: string;
 };
 
-const greetings: Greeting[] = [
-  { id: 2, name: "Lin", message: "Hello, World!", created_at: "2025-01-15 09:58" },
-  { id: 1, name: "Ada", message: "Hello from the database", created_at: "2025-01-15 10:24" },
-];
+const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
-export async function getHello(name = "") {
-  const clean = name.trim();
-  const label = clean || "World";
-  return { message: `Hello, ${label}!` };
+type GreetingsEnvelope = {
+  greetings: Greeting[];
+};
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${apiBase}/v1${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {})
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("API request failed");
+  }
+
+  return response.json() as Promise<T>;
 }
 
-export async function getGreetings() {
-  return [...greetings].sort((a, b) => b.id - a.id);
+export function getHello(name = "") {
+  const query = name.trim() ? `?name=${encodeURIComponent(name.trim())}` : "";
+  return request<{ message: string }>(`/hello${query}`);
 }
 
-export async function createGreeting(input: Pick<Greeting, "name" | "message">) {
-  const next = { id: greetings[0].id + 1, created_at: "2025-01-15 11:05", ...input };
-  greetings.unshift(next);
-  return next;
+export function getGreetings() {
+  return request<GreetingsEnvelope>("/greetings").then((data) => data.greetings);
+}
+
+export function createGreeting(input: Pick<Greeting, "name" | "message">) {
+  return request<Greeting>("/greetings", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
 }
