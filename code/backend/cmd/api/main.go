@@ -31,6 +31,15 @@ type greeting struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+func (g greeting) MarshalJSON() ([]byte, error) {
+	type alias struct {
+		ID        string    `json:"id"`
+		Name      string    `json:"name"`
+		Message   string    `json:"message"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+	return json.Marshal(alias{ID: g.ID, Name: g.Name, Message: g.Message, CreatedAt: g.CreatedAt.UTC()})
+}
 type apiError struct{ Error errorBody `json:"error"` }
 
 type errorBody struct {
