@@ -239,10 +239,12 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	items := make([]greeting, 0, limit+1)
 	for rows.Next() {
 		var item greeting
-		if err := rows.Scan(&item.ID, &item.Name, &item.Message, &item.CreatedAt); err != nil {
+		var createdAt time.Time
+		if err := rows.Scan(&item.ID, &item.Name, &item.Message, &createdAt); err != nil {
 			writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
 			return
 		}
+		item.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
