@@ -163,7 +163,6 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestBody)
 	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
 	var req createGreetingRequest
 	if err := dec.Decode(&req); err != nil {
 		if isBadRequestJSONError(err) {
