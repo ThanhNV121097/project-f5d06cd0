@@ -161,7 +161,7 @@ func (s server) hello(w http.ResponseWriter, r *http.Request) {
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" || !strings.HasPrefix(contentType, "application/json") {
-		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
 		return
 	}
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxRequestBodyBytes+1))
