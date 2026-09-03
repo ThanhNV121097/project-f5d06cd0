@@ -125,8 +125,8 @@ func requestLogger(next http.Handler) http.Handler {
 		if requestID == "" {
 			requestID = strconv.FormatInt(time.Now().UnixNano(), 36)
 		}
-		ctx := context.WithValue(r.Context(), requestIDKey{}, requestID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		r = r.WithContext(context.WithValue(r.Context(), requestIDKey{}, requestID))
+		next.ServeHTTP(w, r)
 	})
 }
 
