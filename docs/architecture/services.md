@@ -354,7 +354,7 @@ No third-party integrations.
 
 ## 10. Story extension — Persist greetings backend contract
 
-Persist greetings implements existing sections 3.3 and 3.4. Backend work for this story must implement `POST /v1/greetings` and `GET /v1/greetings`; deploy proxy exposes them externally as `/api/greetings`.
+Persist greetings implements existing sections 3.3 and 3.4. Backend work for this story must implement `POST /api/greetings` and `GET /api/greetings` as product routes. No `/v1/greetings` backend route belongs to this story.
 
 **Reviewed UI mock contract** — `code/frontend/lib/mock/persist-greetings.ts` exposes:
 
@@ -370,12 +370,12 @@ saveGreeting(input: { name: string; message: string }): Promise<Greeting>;
 fetchGreetings(): Promise<{ greetings: Greeting[] }>;
 ```
 
-Backend response uses same `Greeting` fields and same `{ greetings }` list key. Backend may also return `next_cursor` and `has_more` on list responses per existing pagination contract; frontend adapter can ignore these fields when not needed. Mock ids like `g_...` are not backend ids; backend returns database `bigint` ids encoded as decimal strings.
+Backend response uses same `Greeting` fields and same `{ greetings }` list key. Backend also returns `next_cursor` and `has_more` on list responses per existing pagination contract; frontend adapter can ignore these fields when not needed. Mock ids like `g_...` are not backend ids; backend returns database `bigint` ids encoded as decimal strings.
 
 | Endpoint | Status for this story | Auth | Request | Success | Errors |
 |---|---|---|---|---|---|
-| `POST /v1/greetings` | implement | public | JSON body with required `name` and `message`, trimmed, `name` 1..80 Unicode code points, `message` 1..240 Unicode code points | `201` greeting object with `id`, `name`, `message`, `created_at` and `Location: /v1/greetings/{id}` | `BAD_REQUEST` 400; `VALIDATION_FAILED` 422; `UNAVAILABLE` 503; `INTERNAL` 500 |
-| `GET /v1/greetings` | implement | public | optional `limit` 1..100 default 20; optional opaque `cursor` | `200` object with `greetings` newest first, `next_cursor`, `has_more` | `VALIDATION_FAILED` 422; `UNAVAILABLE` 503; `INTERNAL` 500 |
+| `POST /api/greetings` | implement | public | JSON body with required `name` and `message`, trimmed, `name` 1..80 Unicode code points, `message` 1..240 Unicode code points | `201` greeting object with `id`, `name`, `message`, `created_at` and `Location: /api/greetings/{id}` | `BAD_REQUEST` 400; `VALIDATION_FAILED` 422; `UNAVAILABLE` 503; `INTERNAL` 500 |
+| `GET /api/greetings` | implement | public | optional `limit` 1..100 default 20; optional opaque `cursor` | `200` object with `greetings` newest first, `next_cursor`, `has_more` | `VALIDATION_FAILED` 422; `UNAVAILABLE` 503; `INTERNAL` 500 |
 
 **Validation error details** — use existing error shape. For empty or missing fields return `VALIDATION_FAILED` with field detail `REQUIRED`. For over-limit fields return `VALIDATION_FAILED` with field detail `TOO_LONG`. Invalid JSON, non-string fields, unsupported content type, or body over 16 KiB return `BAD_REQUEST`.
 
