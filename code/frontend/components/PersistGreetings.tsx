@@ -5,7 +5,6 @@ import styles from "./PersistGreetings.module.css";
 import {
   fetchHelloMessage,
   fetchGreetings,
-  saveGreeting,
   type Greeting,
 } from "../lib/mock/persist-greetings";
 
