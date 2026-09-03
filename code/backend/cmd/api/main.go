@@ -323,8 +323,16 @@ func decodeCursor(raw string) (*cursorPayload, error) {
 	return &p, nil
 }
 
+func requestIDFromContext(ctx context.Context) string {
+	value, _ := ctx.Value(requestIDKey{}).(string)
+	return value
+}
+
 func writeAPIError(w http.ResponseWriter, status int, code, message string, details []fieldDetail) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if requestID := requestIDFromContext(w.(interface{ Context() context.Context }).Context()); requestID != "" {
+		w.Header().Set("X-Request-Id", requestID)
+	}
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(errorResponse{Error: apiError{Code: code, Message: message, Details: details}})
 }
