@@ -110,7 +110,7 @@ export default function HelloApiDemo() {
 
       <section className={styles.panel}>
         <h2 className={styles.sectionTitle}>Stored greetings</h2>
-        <p className={styles.sectionLead}>Newest first from GET /api/greetings</p>
+        <p className={styles.sectionLead}>Newest first from GET /v1/greetings</p>
         {empty ? <div className={styles.empty}>No greetings yet. Submit first one above.</div> : (
           <div className={styles.list}>
             {greetings.map((greeting) => (
