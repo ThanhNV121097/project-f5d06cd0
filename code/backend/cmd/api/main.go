@@ -159,8 +159,8 @@ func (s server) hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header.Get("Content-Type")
-	if contentType == "" || !strings.HasPrefix(contentType, "application/json") {
+	contentType := strings.TrimSpace(r.Header.Get("Content-Type"))
+	if contentType == "" || !strings.HasPrefix(strings.ToLower(contentType), "application/json") {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
 		return
 	}
@@ -173,30 +173,30 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
 		return
 	}
-	var input struct {
-		Name    string `json:"name"`
-		Message string `json:"message"`
-	}
-	dec := json.NewDecoder(strings.NewReader(string(body)))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&input); err != nil {
-		if errors.Is(err, io.EOF) {
-			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
-			return
-		}
-		if strings.Contains(err.Error(), "cannot unmarshal") || strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "invalid character") || strings.Contains(err.Error(), "number") {
-			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
-			return
-		}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
-	if err := dec.Decode(&struct{}{}); err != io.EOF {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be a single JSON object.", nil)
+	if len(raw) != 2 {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain only name and message.", nil)
+		return
+	}
+	var input createGreetingInput
+	if err := json.Unmarshal(raw["name"], &input.Name); err != nil || len(raw["name"]) == 0 {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Name must be a string.", nil)
+		return
+	}
+	if err := json.Unmarshal(raw["message"], &input.Message); err != nil || len(raw["message"]) == 0 {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Message must be a string.", nil)
+		return
+	}
+	if _, ok := raw["name"]; !ok || _, ok := raw["message"]; !ok {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain name and message.", nil)
 		return
 	}
 
-	name, message, details := validateGreetingInput(createGreetingInput{Name: input.Name, Message: input.Message})
+	name, message, details := validateGreetingInput(input)
 	if len(details) > 0 {
 		writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Greeting is invalid.", details)
 		return
