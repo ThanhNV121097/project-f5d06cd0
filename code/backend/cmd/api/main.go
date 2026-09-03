@@ -185,7 +185,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if strings.Contains(err.Error(), "cannot unmarshal") || strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "invalid character") || strings.Contains(err.Error(), "number") {
-			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
+			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
 			return
 		}
 		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
