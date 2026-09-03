@@ -135,29 +135,36 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
-	limit := 20
-	if raw := r.URL.Query().Get("limit"); raw != "" { n, err := strconv.Atoi(raw); if err != nil || n < 1 || n > 100 { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"limit", Code:"INVALID", Message:"Limit must be between 1 and 100."}}, ""); return }; limit = n }
-	var cursor cursorPayload
-	if raw := r.URL.Query().Get("cursor"); raw != "" { if err := decodeCursor(raw, &cursor); err != nil { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"cursor", Code:"INVALID", Message:"Cursor is malformed."}}, ""); return } }
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second); defer cancel()
-	query := `SELECT id, name, message, created_at FROM greetings`
-	args := []any{limit + 1}
-	if cursor.ID != "" {
-		query += ` WHERE (created_at, id) < ($2::timestamptz, $3::bigint)`
-		args = append(args, cursor.CreatedAt, cursor.ID)
+	type greetingRow struct {
+		ID        string
+		Name      string
+		Message   string
+		CreatedAt time.Time
 	}
-	query += ` ORDER BY created_at DESC, id DESC LIMIT $1`
-	rows, err := s.db.Query(ctx, query, args...)
-	if err != nil { writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, ""); return }
-	defer rows.Close()
-	items := make([]greeting, 0, limit)
-	for rows.Next() { var row greeting; if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }; items = append(items, row) }
-	if err := rows.Err(); err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }
-	hasMore := len(items) > limit
-	var nextCursor *string
-	if hasMore { items = items[:limit]; c := encodeCursor(items[len(items)-1]); nextCursor = &c }
-	writeJSON(w, http.StatusOK, greetingsResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
-}
+	func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
+		limit := 20
+		if raw := r.URL.Query().Get("limit"); raw != "" { n, err := strconv.Atoi(raw); if err != nil || n < 1 || n > 100 { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"limit", Code:"INVALID", Message:"Limit must be between 1 and 100."}}, ""); return }; limit = n }
+		var cursor cursorPayload
+		if raw := r.URL.Query().Get("cursor"); raw != "" { if err := decodeCursor(raw, &cursor); err != nil { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"cursor", Code:"INVALID", Message:"Cursor is malformed."}}, ""); return } }
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second); defer cancel()
+		query := `SELECT id::text, name, message, created_at FROM greetings`
+		args := []any{limit + 1}
+		if cursor.ID != "" {
+			query += ` WHERE (created_at, id) < ($2::timestamptz, $3::bigint)`
+			args = append(args, cursor.CreatedAt, cursor.ID)
+		}
+		query += ` ORDER BY created_at DESC, id DESC LIMIT $1`
+		rows, err := s.db.Query(ctx, query, args...)
+		if err != nil { writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, ""); return }
+		defer rows.Close()
+		items := make([]greeting, 0, limit)
+		for rows.Next() { var row greeting; if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }; items = append(items, row) }
+		if err := rows.Err(); err != nil { writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected error.", nil, ""); return }
+		hasMore := len(items) > limit
+		var nextCursor *string
+		if hasMore { items = items[:limit]; c := encodeCursor(items[len(items)-1]); nextCursor = &c }
+		writeJSON(w, http.StatusOK, greetingsResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
+	}
 
 func parseStringField(payload map[string]json.RawMessage, key string) (string, bool) {
 	raw, ok := payload[key]
