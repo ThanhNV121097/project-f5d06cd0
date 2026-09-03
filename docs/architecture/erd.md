@@ -99,7 +99,19 @@ No table is expected to approach 10M rows within one year. No partitioning or ar
 
 Implementation note: enable no extension for this table because `bigint generated always as identity` needs none.
 
-## 9. Story extension — Hello page
+## 9. Story extension — Persist greetings
+
+Persist greetings adds no new database entity or column beyond the existing `greetings` table. This story is the table's primary write/read use case: `POST /v1/greetings` inserts one validated row, and `GET /v1/greetings` reads rows newest first.
+
+**Reviewed UI mock contract** — `code/frontend/lib/mock/persist-greetings.ts` exposes `Greeting` with `id`, `name`, `message`, and `created_at`; `saveGreeting(input)` returns one stored greeting; `fetchGreetings()` returns `{ greetings: Greeting[] }`. Backend uses the same greeting fields. Difference: backend returns database ids as strings rather than mock ids like `g_...`, and list response may include pagination metadata per service contract.
+
+**Migration plan for this story** — existing migration `001_create_greetings` already creates every required column, constraint, and index. No new migration.
+
+| Change | Forward | Backward | Safe on non-empty table |
+|---|---|---|---|
+| Persist greetings API data needs | No database change; use existing `greetings` table, constraints, and `idx_greetings_created_at_id` | No database change | Yes; no schema or data mutation |
+
+## 10. Story extension — Hello page
 
 Hello page adds no new database entity or column. It reads `GET /v1/hello`, creates rows through `POST /v1/greetings`, and refreshes the list through `GET /v1/greetings`.
 
