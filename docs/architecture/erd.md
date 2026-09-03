@@ -101,9 +101,9 @@ Implementation note: enable no extension for this table because `bigint generate
 
 ## 9. Story extension — Persist greetings
 
-Persist greetings adds no new database entity or column beyond the existing `greetings` table. This story is the table's primary write/read use case: `POST /v1/greetings` inserts one validated row, and `GET /v1/greetings` reads rows newest first.
+Persist greetings adds no new database entity or column beyond the existing `greetings` table. This story is the table's primary write/read use case: `POST /api/greetings` inserts one validated row, and `GET /api/greetings` reads rows newest first.
 
-**Reviewed UI mock contract** — `code/frontend/lib/mock/persist-greetings.ts` exposes `Greeting` with `id`, `name`, `message`, and `created_at`; `saveGreeting(input)` returns one stored greeting; `fetchGreetings()` returns `{ greetings: Greeting[] }`. Backend uses the same greeting fields. Difference: backend returns database ids as strings rather than mock ids like `g_...`, and list response may include pagination metadata per service contract.
+**Reviewed UI mock contract** — `code/frontend/lib/mock/persist-greetings.ts` exposes `Greeting` with `id`, `name`, `message`, and `created_at`; `saveGreeting(input)` returns one stored greeting; `fetchGreetings()` returns `{ greetings: Greeting[] }`. Backend uses the same greeting fields. Difference: backend returns database ids as decimal strings rather than mock ids like `g_...`; list response includes `next_cursor` and `has_more` per service pagination contract, which clients may ignore.
 
 **Migration plan for this story** — existing migration `001_create_greetings` already creates every required column, constraint, and index. No new migration.
 
