@@ -175,7 +175,7 @@ func decodeCursor(raw string, out *cursorPayload) error {
 }
 
 func encodeCursor(row greeting) string {
-	data, _ := json.Marshal(cursorPayload{CreatedAt: row.CreatedAt, ID: row.ID})
+	data, _ := json.Marshal(cursorPayload{CreatedAt: row.CreatedAt.UTC().Format(time.RFC3339), ID: row.ID})
 	return base64.RawURLEncoding.EncodeToString(data)
 }
 
