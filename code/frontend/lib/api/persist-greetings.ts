@@ -24,17 +24,17 @@ async function readJSON<T>(response: Response): Promise<T> {
 }
 
 export async function fetchHello() {
-  return readJSON<{ message: string }>(await fetch(`${apiBase}/hello`));
+  return readJSON<{ message: string }>(await fetch(`${apiBase}/v1/hello`));
 }
 
 export async function fetchGreetings() {
-  const response = await readJSON<GreetingsResponse>(await fetch(`${apiBase}/greetings`));
+  const response = await readJSON<GreetingsResponse>(await fetch(`${apiBase}/v1/greetings`));
   return { greetings: response.greetings };
 }
 
 export async function saveGreeting(input: GreetingInput) {
   return readJSON<Greeting>(
-    await fetch(`${apiBase}/greetings`, {
+    await fetch(`${apiBase}/v1/greetings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
