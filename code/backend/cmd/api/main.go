@@ -316,10 +316,22 @@ func encodeCursor(p cursorPayload) (string, error) {
 
 func decodeCursor(raw string) (*cursorPayload, error) {
 	b, err := base64.RawURLEncoding.DecodeString(raw)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	var p cursorPayload
-	if err := json.Unmarshal(b, &p); err != nil { return nil, err }
-	if p.CreatedAt == "" || p.ID == "" { return nil, errors.New("cursor incomplete") }
+	if err := json.Unmarshal(b, &p); err != nil {
+		return nil, err
+	}
+	if p.CreatedAt == "" || p.ID == "" {
+		return nil, errors.New("cursor incomplete")
+	}
+	if _, err := time.Parse(time.RFC3339, p.CreatedAt); err != nil {
+		return nil, err
+	}
+	if _, err := strconv.ParseInt(p.ID, 10, 64); err != nil {
+		return nil, err
+	}
 	return &p, nil
 }
 
