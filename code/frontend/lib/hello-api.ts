@@ -5,14 +5,14 @@ export type Greeting = {
   created_at: string;
 };
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
+const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 type GreetingsEnvelope = {
   greetings: Greeting[];
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBase}/v1${path}`, {
+  const response = await fetch(`${apiBase}/api${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
