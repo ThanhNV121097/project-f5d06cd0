@@ -220,7 +220,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	items := make([]greeting, 0, limit)
 	for rows.Next() {
 		var row greeting
-		if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { respondDBError(w, r, err); return }
+		if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt, &row.UpdatedAt); err != nil { respondDBError(w, r, err); return }
 		items = append(items, row)
 	}
 	if err := rows.Err(); err != nil { respondDBError(w, r, err); return }
