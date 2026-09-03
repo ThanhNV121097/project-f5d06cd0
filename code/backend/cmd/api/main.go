@@ -153,7 +153,8 @@ func (s server) hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
-	if ct := r.Header.Get("Content-Type"); ct != "" && !strings.HasPrefix(ct, "application/json") {
+	contentType := r.Header.Get("Content-Type")
+	if contentType == "" || !strings.HasPrefix(contentType, "application/json") {
 		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
 		return
 	}
@@ -168,7 +169,16 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	}
 	var input createGreetingInput
 	dec := json.NewDecoder(strings.NewReader(string(body)))
+	dec.DisallowUnknownFields()
 	if err := dec.Decode(&input); err != nil {
+		if errors.Is(err, io.EOF) {
+			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
+			return
+		}
+		if strings.Contains(err.Error(), "unknown field") {
+			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body contains unknown fields.", nil)
+			return
+		}
 		if strings.Contains(err.Error(), "cannot unmarshal") || strings.Contains(err.Error(), "invalid character") || strings.Contains(err.Error(), "number") {
 			writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain strings.", nil)
 			return
