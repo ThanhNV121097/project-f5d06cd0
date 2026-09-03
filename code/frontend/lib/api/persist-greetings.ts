@@ -28,7 +28,8 @@ export async function fetchHello() {
 }
 
 export async function fetchGreetings() {
-  return readJSON<GreetingsResponse>(await fetch(`${apiBase}/v1/greetings`));
+  const response = await readJSON<GreetingsResponse>(await fetch(`${apiBase}/v1/greetings`));
+  return { greetings: response.greetings };
 }
 
 export async function saveGreeting(input: GreetingInput) {
