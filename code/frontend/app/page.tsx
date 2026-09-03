@@ -55,7 +55,7 @@ export default function Home() {
         await Promise.all([loadHello(), loadGreetings()]);
         setError(null);
       } catch {
-        setError("API unreachable. Check backend is running, then reload.");
+        setError(unreachableMessage);
       }
     })();
   }, []);
