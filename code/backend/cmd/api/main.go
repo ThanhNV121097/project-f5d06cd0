@@ -139,7 +139,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second); defer cancel()
 	var row greeting
 	if err := s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil, requestID); return }
-	w.Header().Set("Location", "/api/greetings/"+row.ID)
+	w.Header().Set("Location", "/v1/greetings/"+row.ID)
 	writeJSON(w, http.StatusCreated, row)
 }
 
