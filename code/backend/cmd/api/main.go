@@ -25,10 +25,10 @@ import (
 type server struct{ db *pgxpool.Pool }
 
 type greeting struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Message   string `json:"message"`
-	CreatedAt string `json:"created_at"`
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Message   string    `json:"message"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type apiError struct{ Error errorBody `json:"error"` }
