@@ -24,7 +24,7 @@ async function readJSON<T>(response: Response): Promise<T> {
 }
 
 export function fetchHello() {
-  return readJSON<{ message: string }>(fetch(`${apiBase}/v1/hello`));
+  return readJSON<{ message: string }>(await fetch(`${apiBase}/v1/hello`));
 }
 
 export async function fetchGreetings() {
