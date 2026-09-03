@@ -327,17 +327,20 @@ func requestIDFromContext(ctx context.Context) string {
 	return value
 }
 
-func writeAPIError(w http.ResponseWriter, status int, code, message string, details []fieldDetail) {
+func writeAPIError(w http.ResponseWriter, r *http.Request, status int, code, message string, details []fieldDetail) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if requestID := requestIDFromContext(w.(interface{ Context() context.Context }).Context()); requestID != "" {
+	if requestID := requestIDFromContext(r.Context()); requestID != "" {
 		w.Header().Set("X-Request-Id", requestID)
 	}
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(errorResponse{Error: apiError{Code: code, Message: message, Details: details}})
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
+func writeJSON(w http.ResponseWriter, r *http.Request, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if requestID := requestIDFromContext(r.Context()); requestID != "" {
+		w.Header().Set("X-Request-Id", requestID)
+	}
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
