@@ -99,7 +99,19 @@ No table is expected to approach 10M rows within one year. No partitioning or ar
 
 Implementation note: enable no extension for this table because `bigint generated always as identity` needs none.
 
-## 9. Open questions
+## 9. Story extension — Hello page
+
+Hello page adds no new database entity or column. It reads `GET /v1/hello`, creates rows through `POST /v1/greetings`, and refreshes the list through `GET /v1/greetings`.
+
+**Reviewed UI mock contract** — `code/frontend/lib/mock/hello-page.ts` exposes `Greeting` with `id`, `name`, `message`, and `created_at`; `getHelloMessage()` returns `{ "message": "Hello, World!" }`; `createGreeting()` returns one stored greeting; `listGreetings()` returns newest-first greetings. Backend uses same fields. Difference: backend encodes `id` as string and wraps list results in `{ greetings, next_cursor, has_more }` per existing service pagination contract; frontend adapter must map this envelope when mock is replaced.
+
+**Migration plan for this story** — no new migration. Existing migration `001_create_greetings` already creates every column and index needed by the Hello page.
+
+| Change | Forward | Backward | Safe on non-empty table |
+|---|---|---|---|
+| Hello page data needs | No database change | No database change | Yes; no schema or data mutation |
+
+## 10. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
