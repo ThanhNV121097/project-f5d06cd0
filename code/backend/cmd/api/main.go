@@ -119,8 +119,8 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	if !ok { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", []apiErrorDetail{{Field:"message", Code:"REQUIRED", Message:"Message is required."}}, ""); return }
 	name = strings.TrimSpace(name); message = strings.TrimSpace(message)
 	details := []apiErrorDetail{}
-	if name == "" || utf8.RuneCountInString(name) > 80 { details = append(details, apiErrorDetail{Field:"name", Code:"INVALID", Message:"Name must be 1 to 80 characters."}) }
-	if message == "" || utf8.RuneCountInString(message) > 240 { details = append(details, apiErrorDetail{Field:"message", Code:"INVALID", Message:"Message must be 1 to 240 characters."}) }
+	if name == "" { details = append(details, apiErrorDetail{Field:"name", Code:"REQUIRED", Message:"Name is required."}) } else if utf8.RuneCountInString(name) > 80 { details = append(details, apiErrorDetail{Field:"name", Code:"INVALID", Message:"Name must be 1 to 80 characters."}) }
+	if message == "" { details = append(details, apiErrorDetail{Field:"message", Code:"REQUIRED", Message:"Message is required."}) } else if utf8.RuneCountInString(message) > 240 { details = append(details, apiErrorDetail{Field:"message", Code:"INVALID", Message:"Message must be 1 to 240 characters."}) }
 	if len(details) > 0 { writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Validation failed.", details, ""); return }
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second); defer cancel()
 	var row greeting
