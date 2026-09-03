@@ -170,7 +170,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(body) > maxRequestBodyBytes {
-		writeAPIError(w, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
 		return
 	}
 	var input struct {
