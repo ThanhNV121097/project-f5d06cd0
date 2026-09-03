@@ -209,7 +209,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	var createdAt time.Time
 	err = s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&created.ID, &created.Name, &created.Message, &createdAt)
 	if err != nil {
-		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+		writeAPIError(w, r, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
 		return
 	}
 	created.CreatedAt = createdAt.UTC().Format(time.RFC3339)
@@ -237,7 +237,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := s.db.Query(ctx, query, args...)
 	if err != nil {
-		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
+		writeAPIError(w, r, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
 		return
 	}
 	defer rows.Close()
