@@ -6,7 +6,7 @@ import { createGreeting, getHello, getGreetings, type Greeting } from "../lib/mo
 
 type ApiStatus = "loading" | "ready" | "error";
 
-const LIMITS = { name: 80, message: 120 };
+const LIMITS = { name: 80, message: 240 };
 
 export default function HelloApiDemo() {
   const [apiError, setApiError] = useState<string | null>(null);
