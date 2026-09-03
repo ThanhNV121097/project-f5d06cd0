@@ -94,10 +94,10 @@ func main() {
 	srv := server{db: db}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", srv.healthz)
-	mux.HandleFunc("GET /api/health", srv.health)
-	mux.HandleFunc("GET /api/hello", srv.hello)
-	mux.HandleFunc("POST /api/greetings", srv.createGreeting)
-	mux.HandleFunc("GET /api/greetings", srv.listGreetings)
+	mux.HandleFunc("GET /v1/health", srv.health)
+	mux.HandleFunc("GET /v1/hello", srv.hello)
+	mux.HandleFunc("POST /v1/greetings", srv.createGreeting)
+	mux.HandleFunc("GET /v1/greetings", srv.listGreetings)
 
 	addr := ":" + listenPort()
 	log.Printf("listening on %s", addr)
