@@ -77,7 +77,7 @@ func applyMigrations(ctx context.Context, db *pgxpool.Pool) error {
 		return err
 	}
 
-	entries, err := fs.ReadDir(migrationFiles, "migrations")
+	entries, err := fs.ReadDir(migrations.FS, ".")
 	if err != nil {
 		return err
 	}
