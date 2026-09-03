@@ -83,7 +83,7 @@ export default function HelloApiDemo() {
       <section className={styles.grid}>
         <article className={styles.panel}>
           <h2 className={styles.sectionTitle}>Live hello</h2>
-          <p className={styles.sectionLead}>Loaded from GET /api/hello</p>
+          <p className={styles.sectionLead}>Loaded from GET /v1/hello</p>
           <div className={styles.helloBox}>
             <strong>{helloMessage}</strong>
           </div>
