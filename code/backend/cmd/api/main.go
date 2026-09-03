@@ -206,6 +206,8 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	created.CreatedAt = createdAt.UTC()
+	w.Header().Set("Location", "/api/greetings/"+created.ID)
+	writeJSON(w, http.StatusCreated, created)
 }
 
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
