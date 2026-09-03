@@ -189,7 +189,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name, message, details := validateGreetingInput(createGreetingInput(input))
+	name, message, details := validateGreetingInput(createGreetingInput{Name: input.Name, Message: input.Message})
 	if len(details) > 0 {
 		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Greeting is invalid.", details)
 		return
