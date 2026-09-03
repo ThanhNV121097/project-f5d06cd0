@@ -1,0 +1,274 @@
+name: CI
+
+# The mechanical half of code review.
+#
+# Everything here is a rule a machine can decide: does it compile, does it lint,
+# do the tests pass. A rule enforced here fails in seconds with a file and a
+# line number, and the author fixes it alone. The same rule left to a reviewer
+# costs a rejection, a full rewrite, and one of the fix attempts a story gets
+# before it ships nothing.
+#
+# This file was missing for a while, and the cost is measurable. The scaffold
+# prompt told the architect to write it, but .github/ is write-protected
+# (see internal/security/path.go — a workflow can publish the image the
+# deployer runs, so agents may read it and never write it). Both attempts
+# failed, and the architect then recorded "ci.workflow: .github/workflows/ci.yml"
+# as a fact about a file that did not exist.
+#
+# What made it hard to see is that CI was not silent. container.yml ran on every
+# pull request and passed, so the pipeline reported "CI passed" and was telling
+# the truth — about whether the image builds and boots, which was the only thing
+# being asked. No lint, no vet, no unit tests, no token check existed anywhere.
+#
+# All of those rules fell to the reviewer's eyes instead. One story's backend was
+# reviewed 22 times and rebuilt 19 times over an error envelope, a health-check
+# timeout, an unhandled query parameter and a status code — every one of them
+# something a test would have caught before a reviewer ever read the diff.
+#
+# Jobs are guarded on the directory they test, because the scaffold lands
+# before the code it scaffolds and a project may legitimately have no frontend
+# or no backend. Skipping is the honest result for a commit with nothing to
+# check; failing would make every early PR red for a reason no author can fix.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: What is here?
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.check.outputs.backend }}
+      frontend: ${{ steps.check.outputs.frontend }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Look for each half
+        id: check
+        run: |
+          if [ -f code/backend/go.mod ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No code/backend/go.mod — skipping backend checks."
+          fi
+          if [ -f code/frontend/package.json ]; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No code/frontend/package.json — skipping frontend checks."
+          fi
+
+  backend:
+    name: Backend
+    needs: guard
+    if: needs.guard.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: code/backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: code/backend/go.mod
+          cache-dependency-path: code/backend/go.sum
+      # Before build: a hand-written go.sum passes `go build` from cache on one
+      # machine and fails on a clean runner, which is the confusing half of this.
+      - name: Dependencies are complete
+        run: go mod download
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test ./...
+
+  frontend:
+    name: Frontend
+    needs: guard
+    if: needs.guard.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: code/frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: code/frontend/package-lock.json
+      # `npm ci` and not `npm install`: it fails loudly when package-lock.json
+      # disagrees with package.json, which is the whole reason the lock file is
+      # committed.
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      # --if-present, because a project may have no tests yet and a missing
+      # script should not be reported as a failing one.
+      - name: Test
+        run: npm test --if-present
+
+  # The design system is a set of rules about CSS, so it is checkable like any
+  # other. A hardcoded colour renders perfectly and is invisible in review until
+  # someone compares two screens; an undefined custom property renders as
+  # nothing at all, with no error anywhere.
+  tokens:
+    name: Design tokens
+    needs: guard
+    if: needs.guard.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: No hardcoded visual values in CSS modules
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          files=(code/frontend/**/*.module.css)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::notice::No CSS modules yet."
+            exit 0
+          fi
+          # Hex colours, rgb()/rgba() literals, and px lengths outside a
+          # var(). Borders and hairlines of 0-2px are exempt: they are not
+          # spacing decisions and the design system does not tokenise them.
+          #
+          # The length branch reads `([3-9]|[0-9]{2,})px` — one digit from 3 up,
+          # or any number of two digits or more — and not the `[3-9][0-9]*px` it
+          # used to, which asked for a FIRST digit of 3-9 and so exempted every
+          # value that merely started with a 1 or a 2. `padding: 24px` and
+          # `width: 250px` sailed through a job whose whole purpose was to stop
+          # them. The exemption belongs to values below 3px, not to values whose
+          # leading digit is small.
+          #
+          # It is a matter for the pattern rather than the filter below, because
+          # a line-level exemption pardons the whole line: `border: 1px solid
+          # #ff0000` would have bought its hardcoded hex an amnesty with a
+          # hairline.
+          #
+          # Two more are exempt for the same reason. A media query cannot hold a
+          # token at all — CSS does not expand var() in a feature value — so
+          # `@media (max-width: 479px)` was a rule no author could satisfy, and
+          # the author who met it deleted the breakpoint rather than tokenise
+          # it. A length inside min()/max()/clamp() is a layout bound and not a
+          # spacing step: `width: min(760px, 100%)` says how wide the element
+          # may grow, which the design system does not tokenise either.
+          #
+          # Measured on one Hello World story: three of its five fix attempts
+          # went to these two false positives, and the story came within one
+          # attempt of shipping nothing over a grep.
+          #
+          # Those exemptions are applied by ERASING the expression before the
+          # match, not by pardoning the line that holds it — which is the same
+          # lesson as the px branch above, learned twice. `var(--` used to sit
+          # in a line-level `grep -v`, so any hardcoded value sharing a line
+          # with any token was invisible: this shipped
+          #
+          #   background: linear-gradient(180deg, #3b82f6 0%, var(--color-primary-hover) 100%);
+          #
+          # through a green run of the job built to stop it, and #3b82f6 was not
+          # even in the palette. Gradients, shadows and borders are exactly the
+          # declarations that mix tokens with literals, so the hole covered the
+          # cases that matter most. Erasing var()/min()/max()/clamp() leaves the
+          # token expression unmatched and every literal beside it exposed.
+          offenders=$(
+            for f in "${files[@]}"; do
+              sed -E 's/\b(var|min|max|clamp)\([^)]*\)/TOKENEXPR/g' "$f" \
+                | grep -nE '(#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|(^|[^-a-zA-Z0-9.])([3-9]|[0-9]{2,})px)' \
+                | sed "s|^|$f:|"
+            done | grep -vE '@media' || true
+          )
+          if [ -n "$offenders" ]; then
+            echo "$offenders"
+            echo "::error::Hardcoded colour or length in a CSS module. Use a token from app/globals.css."
+            exit 1
+          fi
+      # A token that is never defined renders as NOTHING — silently. The
+      # property computes to empty, the browser shows whatever the fallback
+      # cascade gives it, and no error appears anywhere. A reviewer caught one
+      # of these by eye ("uses non-existent design tokens") while this job sat
+      # green, which is one round of review and one rebuild for a diff a grep
+      # answers in a second.
+      - name: Every used token is defined
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          files=(code/frontend/**/*.css)
+          if [ ${#files[@]} -eq 0 ]; then exit 0; fi
+          used=$(grep -rhoE 'var\(--[a-z0-9-]+' "${files[@]}" | sed 's/var(//' | sort -u)
+          if [ -z "$used" ]; then exit 0; fi
+          defined=$(grep -hoE '^[[:space:]]*--[a-z0-9-]+' code/frontend/app/globals.css 2>/dev/null | tr -d ' ' | sort -u)
+          missing=$(comm -23 <(echo "$used") <(echo "$defined") || true)
+          if [ -n "$missing" ]; then
+            echo "::error::Tokens used but never defined in app/globals.css — they render as nothing, silently:"
+            echo "$missing"
+            exit 1
+          fi
+      # globals.css is not the source of truth — design/design-system.md says so
+      # itself, in its own header. This step is why that sentence has teeth.
+      #
+      # Measured: CI passed a module at 12:22:23 and a reviewer blocked the same
+      # file 26 seconds later for "non-existent design tokens". Both were right.
+      # The design system defined `--text-base`; globals.css had expanded it into
+      # `--text-base-size`, `--text-base-weight`, `--text-base-line-height`; the
+      # check above validated against globals.css and so certified the drift the
+      # reviewer then rejected. The machine gate and the human gate were reading
+      # different documents.
+      - name: Defined tokens trace to the design system
+        run: |
+          set -euo pipefail
+          ds=design/design-system.md
+          if [ ! -f "$ds" ] || [ ! -f code/frontend/app/globals.css ]; then
+            echo "::notice::No design system or no globals.css yet."
+            exit 0
+          fi
+          defined=$(grep -hoE '^[[:space:]]*--[a-z0-9-]+' code/frontend/app/globals.css | tr -d ' ' | sort -u)
+          approved=$(grep -hoE '\-\-[a-z0-9-]+' "$ds" | sort -u)
+          stray=$(comm -23 <(echo "$defined") <(echo "$approved") || true)
+          if [ -n "$stray" ]; then
+            # A warning, not a failure, and the reason is a rule this repository
+            # keeps re-learning: a gate the author cannot pass is a blocker.
+            #
+            # Failing here traps the author between two steps. The step above
+            # requires every USED token to be defined in globals.css; this one
+            # requires every DEFINED token to appear in the design system. An
+            # author who needs a token the design system lacks — run 8 needed
+            # --viewport-height — can then only escape by editing the design
+            # system itself, which that document forbids in its own header:
+            # changing a value there without changing the approved design is a
+            # defect. Both doors locked is not enforcement, it is a trap.
+            #
+            # So the drift is reported where the reviewer and the author both
+            # read it, and the decision — widen the design system, or stop using
+            # the token — stays with the people who may actually make it.
+            echo "::warning::These tokens are defined in app/globals.css but appear nowhere in $ds, which calls itself the source of truth. Either the design system should name them, or the CSS should not use them — decide it deliberately rather than letting the two documents drift:"
+            echo "$stray"
+          fi
+      # `var(--space-4, 16px)` is a hardcoded value wearing a token's clothes:
+      # it renders as 16px whenever the token is undefined, so the mistake it
+      # is meant to guard against becomes invisible instead of loud.
+      - name: No token fallbacks
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          files=(code/frontend/**/*.css)
+          if [ ${#files[@]} -eq 0 ]; then exit 0; fi
+          if grep -nE 'var\(--[a-zA-Z0-9-]+,' "${files[@]}"; then
+            echo "::error::var(--token, fallback) hides an undefined token. Define the token instead."
+            exit 1
+          fi
