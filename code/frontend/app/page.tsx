@@ -75,7 +75,6 @@ export default function Home() {
         body: JSON.stringify({ name, message })
       });
       await Promise.all([loadHello(), loadGreetings()]);
-      setGreetings((current) => [saved, ...current].slice(0, current.length + 1));
       setName("");
       setMessage("");
       setError(null);
