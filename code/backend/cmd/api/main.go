@@ -162,7 +162,7 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 
 func parseStringField(payload map[string]json.RawMessage, key string) (string, bool) {
 	raw, ok := payload[key]
-	if !ok { return , false }
+	if !ok { return "", false }
 	var s string
 	if err := json.Unmarshal(raw, &s); err != nil { return "", false }
 	return s, true
