@@ -159,7 +159,12 @@ func (s server) hello(w http.ResponseWriter, r *http.Request) {
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	contentType := strings.TrimSpace(r.Header.Get("Content-Type"))
-	if contentType == "" || !strings.HasPrefix(strings.ToLower(contentType), "application/json") {
+	if contentType == "" {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
+		return
+	}
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil || mediaType != "application/json" {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be JSON.", nil)
 		return
 	}
@@ -172,30 +177,19 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body is too large.", nil)
 		return
 	}
-	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(body, &raw); err != nil {
+	dec := json.NewDecoder(strings.NewReader(string(body)))
+	dec.DisallowUnknownFields()
+	var input createGreetingInput
+	if err := dec.Decode(&input); err != nil {
+		if strings.Contains(err.Error(), "unknown field") || strings.Contains(err.Error(), "cannot unmarshal") {
+			writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain only name and message.", nil)
+			return
+		}
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
-	if len(raw) != 2 {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain only name and message.", nil)
-		return
-	}
-	var input createGreetingInput
-	if err := json.Unmarshal(raw["name"], &input.Name); err != nil || len(raw["name"]) == 0 {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Name must be a string.", nil)
-		return
-	}
-	if err := json.Unmarshal(raw["message"], &input.Message); err != nil || len(raw["message"]) == 0 {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Message must be a string.", nil)
-		return
-	}
-	if _, ok := raw["name"]; !ok {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain name and message.", nil)
-		return
-	}
-	if _, ok := raw["message"]; !ok {
-		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain name and message.", nil)
+	if dec.More() || dec.InputOffset() != int64(len(body)) {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
 
