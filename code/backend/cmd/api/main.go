@@ -247,14 +247,14 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 		var item greeting
 		var createdAt time.Time
 		if err := rows.Scan(&item.ID, &item.Name, &item.Message, &createdAt); err != nil {
-			writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
+			writeAPIError(w, r, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
 			return
 		}
 		item.CreatedAt = createdAt.UTC().Format(time.RFC3339)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
+		writeAPIError(w, r, http.StatusInternalServerError, "INTERNAL", "Unexpected failure.", nil)
 		return
 	}
 
