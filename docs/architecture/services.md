@@ -422,7 +422,7 @@ Hello API adds no new backend endpoint beyond existing section 3.1 and 3.2 contr
 
 **Migration plan for this story** — no migration. Forward: no database change. Backward: no database change. Safe on populated table: yes, because endpoints are stateless and do not read or write data.
 
-## 12. Open questions
+## 13. Open questions
 
 | Question | Owner | Blocking |
 |---|---|---|
