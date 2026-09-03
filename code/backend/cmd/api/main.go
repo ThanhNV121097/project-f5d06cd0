@@ -155,7 +155,8 @@ func (s server) getHello(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
-	if ct := r.Header.Get("Content-Type"); ct != "" && !strings.HasPrefix(ct, "application/json") {
+	ct := r.Header.Get("Content-Type")
+	if ct == "" || !strings.HasPrefix(ct, "application/json") {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Content type must be JSON.", nil)
 		return
 	}
@@ -168,7 +169,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
-	if dec.More() {
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
@@ -193,7 +194,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		respondDBError(w, r, err)
 		return
 	}
-	w.Header().Set("Location", "/api/v1/greetings/"+g.ID)
+	w.Header().Set("Location", "/api/greetings/"+g.ID)
 	writeJSON(w, http.StatusCreated, g)
 }
 
