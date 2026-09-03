@@ -59,23 +59,6 @@ type greetingsResponse struct {
 	HasMore    bool       `json:"has_more"`
 }
 
-type requestIDKey struct{}
-
-func requestID(r *http.Request) string {
-	if v := strings.TrimSpace(r.Header.Get("X-Request-Id")); v != "" {
-		return v
-	}
-	var b [12]byte
-	_, _ = rand.Read(b[:])
-	return hex.EncodeToString(b[:])
-}
-
-func withRequestID(w http.ResponseWriter, id string) {
-	if id != "" {
-		w.Header().Set("X-Request-Id", id)
-	}
-}
-
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
