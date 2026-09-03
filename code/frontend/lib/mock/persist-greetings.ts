@@ -20,13 +20,15 @@ const greetings: Greeting[] = [
   },
 ];
 
-export const helloMessage = "Hello, World!";
-
-export function listGreetings() {
-  return [...greetings];
+export async function fetchHelloMessage() {
+  return { message: "Hello, World!" };
 }
 
-export function saveGreeting(input: { name: string; message: string }) {
+export async function fetchGreetings() {
+  return { greetings: [...greetings] };
+}
+
+export async function saveGreeting(input: { name: string; message: string }) {
   const greeting: Greeting = {
     id: `g_${Date.now()}`,
     name: input.name.trim(),
@@ -37,3 +39,4 @@ export function saveGreeting(input: { name: string; message: string }) {
   greetings.unshift(greeting);
   return greeting;
 }
+
