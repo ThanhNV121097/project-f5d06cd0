@@ -67,7 +67,7 @@
 .statusPill {
   display: inline-flex;
   align-items: center;
-  min-height: calc(var(--space-11) - var(--space-1));
+  min-height: var(--space-11);
   padding: var(--space-2) var(--space-4);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-full);
@@ -91,11 +91,11 @@
   padding: var(--space-4);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface) 88%, var(--color-primary) 12%);
+  background: var(--color-surface-raised);
 }
 
 .primaryButton {
-  min-height: calc(var(--space-11));
+  min-height: var(--space-11);
   padding: var(--space-3) var(--space-4);
   border: 0;
   border-radius: var(--radius-sm);
@@ -123,7 +123,7 @@
 
 .field input,
 .field textarea {
-  min-height: calc(var(--space-11));
+  min-height: var(--space-11);
   padding: var(--space-3) var(--space-4);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -132,17 +132,17 @@
 }
 
 .field textarea {
-  min-height: calc(var(--space-12) + var(--space-5));
+  min-height: var(--space-14);
   resize: vertical;
 }
 
 .errorBox {
   margin-bottom: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: var(--border-width) solid var(--color-danger);
+  border: var(--border-width) solid #fecaca;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-surface) 10%, var(--color-danger) 90%);
-  color: var(--color-danger);
+  background: #fef2f2;
+  color: #9f1239;
 }
 
 .list {
