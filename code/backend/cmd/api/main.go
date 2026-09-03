@@ -149,7 +149,7 @@ func (s server) healthz(w http.ResponseWriter, r *http.Request) {
 func (s server) hello(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.URL.Query().Get("name"))
 	if utf8.RuneCountInString(name) > nameLimit {
-		writeAPIError(w, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Name is too long.", []fieldDetail{{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."}})
+		writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Name is too long.", []fieldDetail{{Field: "name", Code: "TOO_LONG", Message: "Name must be 80 characters or fewer."}})
 		return
 	}
 	if name == "" {
