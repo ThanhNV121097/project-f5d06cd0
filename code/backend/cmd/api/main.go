@@ -41,6 +41,7 @@ type apiError struct {
 	} `json:"error"`
 }
 
+
 type greeting struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
