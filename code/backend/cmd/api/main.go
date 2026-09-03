@@ -191,7 +191,11 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Message must be a string.", nil)
 		return
 	}
-	if _, ok := raw["name"]; !ok || _, ok := raw["message"]; !ok {
+	if _, ok := raw["name"]; !ok {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain name and message.", nil)
+		return
+	}
+	if _, ok := raw["message"]; !ok {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must contain name and message.", nil)
 		return
 	}
