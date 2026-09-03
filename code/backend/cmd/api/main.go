@@ -177,7 +177,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	var g greeting
-	if err := s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id::text, name, message, created_at`, name, message).Scan(&g.ID, &g.Name, &g.Message, &g.CreatedAt); err != nil {
+	if err := s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id::text, name, message, created_at, updated_at`, name, message).Scan(&g.ID, &g.Name, &g.Message, &g.CreatedAt, &g.UpdatedAt); err != nil {
 		respondDBError(w, r, err)
 		return
 	}
