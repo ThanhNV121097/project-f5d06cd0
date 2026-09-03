@@ -18,21 +18,21 @@ export default function HelloApiDemo() {
 
   const empty = greetings.length === 0;
 
+  async function load() {
+    const [hello, stored] = await Promise.all([getHello(), getGreetings()]);
+    setHelloMessage(hello.message);
+    setGreetings(stored);
+    setStatus("ready");
+    setApiError(null);
+  }
+
   useEffect(() => {
     let live = true;
-    Promise.all([getHello(), getGreetings()])
-      .then(([hello, stored]) => {
-        if (!live) return;
-        setHelloMessage(hello.message);
-        setGreetings(stored);
-        setStatus("ready");
-        setApiError(null);
-      })
-      .catch(() => {
-        if (!live) return;
-        setStatus("error");
-        setApiError("API unreachable. Check backend service and try again.");
-      });
+    load().catch(() => {
+      if (!live) return;
+      setStatus("error");
+      setApiError("API unreachable. Check backend service and try again.");
+    });
     return () => {
       live = false;
     };
@@ -53,8 +53,8 @@ export default function HelloApiDemo() {
     setSaving(true);
     setFormError(null);
     try {
-      const saved = await createGreeting({ name, message });
-      setGreetings((current) => [saved, ...current]);
+      await createGreeting({ name, message });
+      await load();
       form.reset();
     } catch {
       setFormError("Save failed. Try again.");
