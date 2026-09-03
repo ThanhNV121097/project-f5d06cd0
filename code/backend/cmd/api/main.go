@@ -194,15 +194,13 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 
-	var created greeting
-	err = s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&created.ID, &created.Name, &created.Message, &created.CreatedAt)
+	createdAt := time.Time{}
+	err = s.db.QueryRow(ctx, `INSERT INTO greetings (name, message) VALUES ($1, $2) RETURNING id, name, message, created_at`, name, message).Scan(&created.ID, &created.Name, &created.Message, &createdAt)
 	if err != nil {
 		writeAPIError(w, http.StatusServiceUnavailable, "UNAVAILABLE", "Database unavailable.", nil)
 		return
 	}
-
-	w.Header().Set("Location", "/api/greetings/"+created.ID)
-	writeJSON(w, http.StatusCreated, created)
+	created.CreatedAt = createdAt.UTC()
 }
 
 func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
