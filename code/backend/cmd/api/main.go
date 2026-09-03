@@ -203,11 +203,20 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	query := `SELECT id::text, name, message, created_at FROM greetings`
 	if raw := r.URL.Query().Get("cursor"); raw != "" {
 		payload, err := decodeCursor(raw)
-		if err != nil { writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}}); return }
+		if err != nil {
+			writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}})
+			return
+		}
 		createdAt, err := time.Parse(time.RFC3339Nano, payload.CreatedAt)
-		if err != nil { writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}}); return }
+		if err != nil {
+			writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}})
+			return
+		}
 		id, err := strconv.ParseInt(payload.ID, 10, 64)
-		if err != nil { writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}}); return }
+		if err != nil {
+			writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Cursor is invalid.", []fieldError{{Field: "cursor", Code: "INVALID", Message: "Cursor must be a valid page token."}})
+			return
+		}
 		query += ` WHERE (created_at, id) < ($1, $2)`
 		args = append(args, createdAt, id)
 	}
@@ -217,23 +226,34 @@ func (s server) listGreetings(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	rows, err := s.db.Query(ctx, query, args...)
-	if err != nil { respondDBError(w, r, err); return }
+	if err != nil {
+		respondDBError(w, r, err)
+		return
+	}
 	defer rows.Close()
 
 	items := make([]greeting, 0, limit)
 	for rows.Next() {
 		var row greeting
-		if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil { respondDBError(w, r, err); return }
+		if err := rows.Scan(&row.ID, &row.Name, &row.Message, &row.CreatedAt); err != nil {
+			respondDBError(w, r, err)
+			return
+		}
 		items = append(items, row)
 	}
-	if err := rows.Err(); err != nil { respondDBError(w, r, err); return }
+	if err := rows.Err(); err != nil {
+		respondDBError(w, r, err)
+		return
+	}
 
 	hasMore := len(items) > limit
-	if hasMore { items = items[:limit] }
+	if hasMore {
+		items = items[:limit]
+	}
 	var nextCursor *string
 	if hasMore && len(items) > 0 {
 		last := items[len(items)-1]
-		encoded := encodeCursor(cursorPayload{CreatedAt: last.CreatedAt, ID: last.ID})
+		encoded := encodeCursor(cursorPayload{CreatedAt: last.CreatedAt.UTC().Format(time.RFC3339Nano), ID: last.ID})
 		nextCursor = &encoded
 	}
 	writeJSON(w, http.StatusOK, listResponse{Greetings: items, NextCursor: nextCursor, HasMore: hasMore})
