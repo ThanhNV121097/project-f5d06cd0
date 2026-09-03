@@ -159,12 +159,20 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
 		return
 	}
+	if dec.More() {
+		writeAPIError(w, r, http.StatusBadRequest, "BAD_REQUEST", "Request body must be valid JSON.", nil)
+		return
+	}
 	name, nameErr := validateText(req.Name, "name", maxNameLen)
 	message, msgErr := validateText(req.Message, "message", maxMessageLen)
 	if nameErr != nil || msgErr != nil {
 		details := make([]fieldError, 0, 2)
-		if nameErr != nil { details = append(details, *nameErr) }
-		if msgErr != nil { details = append(details, *msgErr) }
+		if nameErr != nil {
+			details = append(details, *nameErr)
+		}
+		if msgErr != nil {
+			details = append(details, *msgErr)
+		}
 		writeAPIError(w, r, http.StatusUnprocessableEntity, "VALIDATION_FAILED", "Greeting fields are invalid.", details)
 		return
 	}
