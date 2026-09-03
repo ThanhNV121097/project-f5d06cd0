@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type Greeting = {
   id: string;
@@ -9,7 +9,9 @@ type Greeting = {
   created_at: string;
 };
 
-type ErrorState = string | null;
+type ApiGreetingList = {
+  greetings: Greeting[];
+};
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
@@ -28,7 +30,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export default function Home() {
   const [hello, setHello] = useState("Hello, World!");
   const [greetings, setGreetings] = useState<Greeting[]>([]);
-  const [error, setError] = useState<ErrorState>(null);
+  const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
 
@@ -37,7 +39,7 @@ export default function Home() {
       try {
         const [helloRes, listRes] = await Promise.all([
           request<{ message: string }>("/hello"),
-          request<{ greetings: Greeting[] }>("/greetings")
+          request<ApiGreetingList>("/greetings")
         ]);
         setHello(helloRes.message);
         setGreetings(listRes.greetings);
@@ -48,7 +50,7 @@ export default function Home() {
     })();
   }, []);
 
-  async function submitForm(event: React.FormEvent) {
+  async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
       const saved = await request<Greeting>("/greetings", {
