@@ -207,7 +207,7 @@ func (s server) createGreeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location", "/v1/greetings/"+created.ID)
+	w.Header().Set("Location", "/api/greetings/"+created.ID)
 	writeJSON(w, http.StatusCreated, created)
 }
 
