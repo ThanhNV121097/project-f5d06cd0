@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"mime"
+	"log"
 	"net/http"
 	"os"
 	"sort"
