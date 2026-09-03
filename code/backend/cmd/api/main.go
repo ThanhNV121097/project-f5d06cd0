@@ -53,10 +53,9 @@ type helloResponse struct {
 	Message string `json:"message"`
 }
 
-type greetingsResponse struct {
-	Greetings  []greeting `json:"greetings"`
-	NextCursor *string    `json:"next_cursor"`
-	HasMore    bool       `json:"has_more"`
+type cursorPayload struct {
+	CreatedAt string `json:"created_at"`
+	ID        string `json:"id"`
 }
 
 func main() {
