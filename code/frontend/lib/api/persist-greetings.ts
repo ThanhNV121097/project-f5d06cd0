@@ -12,6 +12,8 @@ type GreetingInput = {
 
 type GreetingsResponse = {
   greetings: Greeting[];
+  next_cursor: string | null;
+  has_more: boolean;
 };
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "/api";
@@ -23,12 +25,16 @@ async function readJSON<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchHello() {
-  return readJSON<{ message: string }>(await fetch(`${apiBase}/v1/hello`));
+export async function fetchHello(name = "") {
+  const url = new URL(`${apiBase}/v1/hello`, window.location.origin);
+  if (name) url.searchParams.set("name", name);
+  return readJSON<{ message: string }>(await fetch(url.toString()));
 }
 
-export async function fetchGreetings() {
-  const response = await readJSON<GreetingsResponse>(await fetch(`${apiBase}/v1/greetings`));
+export async function fetchGreetings(limit = 20) {
+  const url = new URL(`${apiBase}/v1/greetings`, window.location.origin);
+  url.searchParams.set("limit", String(limit));
+  const response = await readJSON<GreetingsResponse>(await fetch(url.toString()));
   return { greetings: response.greetings };
 }
 
